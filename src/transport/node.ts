@@ -1,8 +1,8 @@
 // Transport layer implementations for Node.JS
 
-import * as common from "./common";
-import { Session } from "./session";
-import * as tls from "node:tls";
+import * as common from "../common";
+import { Session } from "../session";
+import * as tls from "tls";
 
 class TlsStream implements common.ReadableWritable {
     socket: tls.TLSSocket;

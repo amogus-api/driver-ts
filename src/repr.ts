@@ -237,3 +237,24 @@ export class Entity extends DataRepr<Required<EntityObj<any>>> {
         return new FieldArray(value.spec.fields).validate(value.value!);
     }
 }
+
+export class EnumOrBf<T extends number> extends DataRepr<T> {
+    private readonly int: Int;
+
+    constructor(size: number) {
+        super();
+        this.int = new Int(size);
+    }
+
+    override async write(stream: Writable, value: T): Promise<void> {
+        await this.int.write(stream, value);
+    }
+
+    override async read(stream: Readable): Promise<T> {
+        return await this.int.read(stream) as T;
+    }
+
+    override validate(value: T) {
+        return (value >= 0) && (value < (1 << (8 * this.int.size)));
+    }
+}

@@ -4,7 +4,7 @@ export default [
     input: './src/index.ts',
     output: {
       file: './lib/index.esm.js',
-      format: 'esm',
+      format: 'esm'
     },
     plugins: [typescript()],
   },
@@ -12,7 +12,7 @@ export default [
     input: './src/index.ts',
     output: {
       file: './lib/index.js',
-      format: 'cjs',
+      format: 'cjs'
     },
     plugins: [typescript()],
   },

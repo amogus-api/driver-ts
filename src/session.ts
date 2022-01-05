@@ -46,6 +46,7 @@ export class Transaction {
     }
 }
 
+export const SPEC_VERSION = 1;
 export abstract class Session {
     specSpace: common.SpecSpace;
     stream: common.ReadableWritable;
@@ -54,6 +55,9 @@ export abstract class Session {
     active: boolean = false;
 
     constructor(specSpace: common.SpecSpace, stream: common.ReadableWritable, self: common.PeerType) {
+        if(specSpace.specVersion !== SPEC_VERSION)
+            throw new Error(`Unsupported spec version '${specSpace.specVersion}'. This version of 'amogus-driver' only supports specs of version '${SPEC_VERSION}'. Upgrade or downgrade 'susc' or 'amogus-driver'.`);
+
         this.specSpace = specSpace;
         this.stream = stream;
         this.self = self;
@@ -160,6 +164,10 @@ export abstract class Session {
             })
         });
     }
+}
+
+export interface BoundSession {
+    session: Session;
 }
 
 export abstract class Segment {

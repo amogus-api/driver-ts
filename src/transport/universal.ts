@@ -1,7 +1,7 @@
 // Platform-agnostic transport layer implementations
 
-import * as common from "./common";
-import { Session } from "./session";
+import * as common from "../common";
+import { Session } from "../session";
 
 class DummyLink implements common.ReadableWritable {
     other!: DummyLink;
@@ -57,7 +57,7 @@ class DummyServer extends Session {
     }
 }
 
-export function dummyPair(specSpace: common.SpecSpace) {
+export function createDummyPair(specSpace: common.SpecSpace) {
     const [a, b] = [new DummyLink(), new DummyLink()];
     a.other = b;
     b.other = a;

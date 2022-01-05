@@ -1,5 +1,7 @@
 // This file contains common AMOGUS definitions
 
+import { Session } from "./session";
+
 export type PeerType = "client" | "server";
 
 export type range = [number, number];
@@ -58,24 +60,28 @@ export interface ConfSpec {
 }
 
 export interface SpecSpace {
+    specVersion: number,
     entities: { [id: number]: Entity<EntitySpec> };
     globalMethods: { [id: number]: Method<MethodSpec> };
     confirmations: { [id: number]: Confirmation<ConfSpec> };
 }
 
-export type FieldValue<Spec extends FieldSpec> = { [K in keyof Spec["required"]]: TsType<Spec["required"][K]> }
+export type FieldValue<Spec extends FieldSpec> =
+          { [K in keyof Spec["required"]]: TsType<Spec["required"][K]> }
         & { [K in keyof Spec["optional"]]?: TsType<Spec["optional"][K][1]> };
 
 export abstract class Entity<Spec extends EntitySpec> extends Cloneable<Entity<Spec>> {
     readonly spec: Spec;
     readonly numericId: number;
+    readonly session?: Session;
 
     value?: FieldValue<Spec["fields"]>;
 
-    constructor(spec: Spec, numericId: number) {
+    constructor(spec: Spec, numericId: number, session?: Session) {
         super();
         this.spec = spec;
         this.numericId = numericId;
+        this.session = session;
     }
 }
 
