@@ -115,3 +115,24 @@ export abstract class Confirmation<Spec extends ConfSpec> extends Cloneable<Conf
         this.numericId = numericId;
     }
 }
+
+export class EventHost<Event> {
+    private subs: ((ev: Event) => any)[] = [];
+
+    constructor() { }
+
+    subscribe(cb: (ev: Event) => any) {
+        this.subs.push(cb);
+    }
+
+    unsubscribe(cb: (ev: Event) => any) {
+        this.subs = this.subs.filter(x => x !== cb);
+    }
+
+    protected trigger(ev: Event) {
+        for(const cb of this.subs)
+            cb(ev);
+    }
+}
+
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;

@@ -17,7 +17,7 @@ class DummyLink implements common.ReadableWritable {
     read(cnt: number): Promise<Buffer> {
         return new Promise((resolve, _reject) => {
             const check = () => {
-                if(this.readBuf.length <= cnt) {
+                if(this.readBuf.length >= cnt) {
                     const data = this.readBuf.slice(0, cnt);
                     this.readBuf = this.readBuf.slice(cnt);
                     resolve(data);

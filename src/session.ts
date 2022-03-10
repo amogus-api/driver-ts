@@ -3,33 +3,31 @@
 import * as common from "./common";
 import { Entity as EntityRepr, FieldArray, Int, Str } from "./repr";
 
-export type TransactionCallbackData = (
+export type ConfCallback<T extends common.Method<any>> =
+    (data: common.ValueUnion<T["spec"]["confirmations"]>) =>
+   Promise<common.ValueUnion<T["spec"]["confirmations"]>["response"]>;
+
+export type TransactionEvent = (
     { type: "created" } |
     { type: "inbound", segment: Segment } |
     { type: "outbound", segment: Segment } |
     { type: "finished" } |
-    { type: "cancelled" });
-export type TransactionCallback = (event: TransactionCallbackData & { tranId: number }) => any;
-
-export type ConfCallback<T extends common.Method<any>> =
-    (data: common.ValueUnion<T["spec"]["confirmations"]>["request"]) =>
-   Promise<common.ValueUnion<T["spec"]["confirmations"]>["response"]>;
-
-export class Transaction {
+    { type: "cancelled" }) &
+    { tran?: Transaction };
+export class Transaction extends common.EventHost<TransactionEvent> {
     session: Session;
     id: number;
     segments: Segment[] = [];
-    callback?: TransactionCallback;
 
-    constructor(session: Session, id: number, callback?: (data: any) => any) {
+    constructor(session: Session, id: number) {
+        super();
         this.session = session;
         this.id = id;
-        this.callback = callback;
     }
 
-    finalized(): boolean {
+    finalized() {
         const first = this.segments[0];
-        const last = this.segments.reverse()[0];
+        const last = [...this.segments].reverse()[0];
         
         if(first instanceof InvokeMethodSegment)
             return (last instanceof MethodReturnSegment) || (last instanceof MethodErrorSegment);
@@ -40,14 +38,62 @@ export class Transaction {
         return false;
     }
 
-    notify(data: TransactionCallbackData): any {
-        if(this.callback)
-            return this.callback({ ...data, tranId: this.id });
+    notify(data: TransactionEvent): any {
+        this.trigger({ ...data, tran: this });
     }
 }
 
-export const SPEC_VERSION = 1;
-export abstract class Session {
+export class InvocationSessionEvent<M extends common.Method<any>> {
+    readonly type = "method_invocation";
+    private event: TranSessionEvent;
+    private session: Session;
+    method: M;
+    params: M["params"];
+
+    constructor(event: TranSessionEvent, session: Session) {
+        const minv = event.transaction.segments[0] as InvokeMethodSegment;
+
+        this.event = event;
+        this.session = session;
+        // @ts-expect-error
+        // can be safely ignored
+        this.method = minv.payload;
+        this.params = this.method.params;
+    }
+    
+    async confirm<C extends common.Confirmation<any>>(conf: C, data: C["request"]): Promise<C["response"]> {
+        await this.session.writeSegment(new ConfRequestSegment(this.event.transaction.id,
+            { ...conf, request: data }));
+
+        // wait for response
+        return new Promise((resolve) => {
+            const cb = (event: TransactionEvent) => {
+                if(event.type !== "inbound")
+                    return;
+                if(!(event.segment instanceof ConfResponseSegment))
+                    return;
+                this.event.transaction.unsubscribe(cb);
+                resolve(event.segment.payload.response);
+            }
+            this.event.transaction.subscribe(cb);
+        });
+    }
+
+    async error(code: number, message: string): Promise<any> {
+        await this.session.writeSegment(new MethodErrorSegment(this.event.transaction.id,
+            { code, msg: message }));
+    }
+
+    async return(ret: M["returnVal"]): Promise<any> {
+        this.method.returnVal = ret;
+        await this.session.writeSegment(new MethodReturnSegment(this.event.transaction.id, this.method));
+    }
+}
+
+export const TARGET_SPEC_VERSION = 1;
+export type TranSessionEvent = { type: "new_transaction", transaction: Transaction };
+export type SessionEvent = TranSessionEvent | InvocationSessionEvent<any>;
+export abstract class Session extends common.EventHost<SessionEvent> {
     specSpace: common.SpecSpace;
     stream: common.ReadableWritable;
     self: common.PeerType;
@@ -55,13 +101,23 @@ export abstract class Session {
     active: boolean = false;
 
     constructor(specSpace: common.SpecSpace, stream: common.ReadableWritable, self: common.PeerType) {
-        if(specSpace.specVersion !== SPEC_VERSION)
-            throw new Error(`Unsupported spec version '${specSpace.specVersion}'. This version of 'amogus-driver' only supports specs of version '${SPEC_VERSION}'. Upgrade or downgrade 'susc' or 'amogus-driver'.`);
-
+        super();
+        if(specSpace.specVersion !== TARGET_SPEC_VERSION)
+            throw new Error(`Unsupported spec version ${specSpace.specVersion}; this version of 'amogus-driver' only supports v${TARGET_SPEC_VERSION}. Upgrade or downgrade 'susc' or 'amogus-driver'.`);
+        
+        this.subscribe(this.processMethodTran.bind(this));
         this.specSpace = specSpace;
         this.stream = stream;
         this.self = self;
         this.run();
+    }
+
+    private async processMethodTran(event: SessionEvent) {
+        if(event.type !== "new_transaction")
+            return;
+        if(!(event.transaction.segments[0] instanceof InvokeMethodSegment))
+            return;
+        this.trigger(new InvocationSessionEvent(event, this));
     }
 
     private run() {
@@ -89,12 +145,18 @@ export abstract class Session {
         }
 
         // add the segment to its transaction
-        var transaction = this.transactions.find(x => x.id === segment.transactionId);
+        let transaction = this.transactions.find(x => x.id === segment.transactionId);
+        // create the object for new transactions
+        let created = false;
         if(!transaction) {
             transaction = new Transaction(this, segment.transactionId);
             this.transactions.push(transaction);
+            created = true;
         }
-        transaction?.notify({ type: "inbound", segment: segment });
+        transaction.segments.push(segment);
+        if(created)
+            this.trigger({ type: "new_transaction", transaction });
+        transaction?.notify({ type: "inbound", segment });
 
         // remove the transaction if it's finished
         if(transaction.finalized()) {
@@ -107,7 +169,9 @@ export abstract class Session {
 
     async writeSegment(segment: Segment): Promise<void> {
         const transaction = this.transactions[segment.transactionId];
-        transaction?.notify({ type: "outbound", segment: segment });
+        transaction.segments.push(segment);
+        transaction?.notify({ type: "outbound", segment });
+
         await segment.write(this.stream);
     }
 
@@ -118,7 +182,7 @@ export abstract class Session {
         await this.writeSegment(new TranSynSegment(0));
     }
 
-    async createTransaction(initSegment: Segment, callback?: TransactionCallback): Promise<Transaction> {
+    async createTransaction(initSegment: Segment): Promise<Transaction> {
         // get the first free id
         const allIds = this.transactions.map(x => x.id);
         const freeIds = Array.from({ length: 256 }, (_, i) => i).filter(id => !(id in allIds));
@@ -129,7 +193,6 @@ export abstract class Session {
         // create the transaction and remember it
         const transaction = new Transaction(this, id);
         initSegment.transactionId = id;
-        transaction.callback = callback;
         this.transactions.push(transaction);
         transaction.notify({ type: "created" });
         await this.writeSegment(initSegment);
@@ -141,7 +204,7 @@ export abstract class Session {
         confirmationCallback?: ConfCallback<T>
     ): Promise<common.FieldValue<T["spec"]["returns"]>> {
         return new Promise((resolve, reject) => {
-            this.createTransaction(new InvokeMethodSegment(0, method), (event) => {
+            this.createTransaction(new InvokeMethodSegment(0, method)).then((t) => t.subscribe((event) => {
                 if(event.type === "cancelled")
                     reject("cancelled by a TranSyn segment");
 
@@ -152,16 +215,20 @@ export abstract class Session {
                             return;
                         }
                         // we can be sure it's okay because the decoder checked it
-                        confirmationCallback(event.segment.payload.request).then((response) =>
-                            this.writeSegment(new ConfResponseSegment(event.tranId, response)));
+                        const payload = event.segment.payload;
+                        confirmationCallback(payload)
+                            .then((response) => {
+                                payload.response = response;
+                                this.writeSegment(new ConfResponseSegment(event.tran!.id, payload));
+                            });
                     } else if(event.segment instanceof MethodReturnSegment) {
                         // we can be just as sure here
-                        resolve(event.segment.payload as unknown as common.FieldValue<T["spec"]["returns"]>);
+                        resolve(event.segment.payload.returnVal as unknown as common.FieldValue<T["spec"]["returns"]>);
                     } else if(event.segment instanceof MethodErrorSegment) {
                         reject({ code: event.segment.payload.code, message: event.segment.payload.msg });
                     }
                 }
-            })
+            }));
         });
     }
 }
@@ -192,11 +259,11 @@ export abstract class Segment {
 
     async write(stream: common.Writable) {
         await stream.write(Buffer.from([this.transactionId]));
+        this.encode(stream);
     }
 
     static async read(session: Session, stream: common.Readable, boundTo: common.PeerType): Promise<Segment> {
-        const tran: number = (await stream.read(1))[0];
-        const prefix: number = (await stream.read(1))[0];
+        const [tran, prefix] = [...await stream.read(2)];
         const concreteClass = {
             "server": [
                 InvokeMethodSegment,
@@ -306,8 +373,7 @@ export class ConfResponseSegment extends Segment {
     static override async decode(session: Session, stream: common.Readable, prefix: number, tran: number): Promise<ConfResponseSegment> {
         // find spec
         const transaction = session.transactions.find(x => x.id == tran);
-        const conf = (transaction!.segments.reverse()[0] as ConfRequestSegment).payload.clone();
-        conf.request = undefined;
+        const conf = ([...transaction!.segments].reverse()[0] as ConfRequestSegment).payload;
 
         // read fields
         const array = new FieldArray(conf.spec.response);

@@ -22,7 +22,7 @@ export class Int extends DataRepr<number> {
             data[i] = value & 0xFF;
             value >>= 8;
         }
-        await stream.write(data);
+        await stream.write(data.reverse());
     }
 
     override async read(stream: Readable): Promise<number> {
@@ -97,7 +97,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
         // calculate overhead
         const maxOptional = Object.values(this.spec.optional)
                 .map(x => x[0])
-                .reduce((acc, x) => Math.max(acc, x));
+                .reduce((acc, x) => Math.max(acc, x), 0);
         this._hpSelLen = Math.ceil(maxOptional / 8);
     }
 
