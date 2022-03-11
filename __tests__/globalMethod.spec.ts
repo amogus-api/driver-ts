@@ -6,19 +6,23 @@ describe("Global method invocation", () => {
     const { client, server } = amogus.transport.universal.createDummyPair(api.specSpace);
     const clientSession = api.bind(client);
 
+    // server transaction listener
     server.subscribe(async (event) => {
+        // only process echo() invocations
         if(!(event instanceof amogus.session.InvocationSessionEvent))
             return;
         if(!(event.method instanceof api.Echo))
             return;
 
         if(serverAskCaptcha) {
+            // ask captcha and compare solution
             const { code } = await event.confirm(new api.Captcha(), { url: "https://example.com/amogus.png" });
             if(code === "amogus")
                 await event.return({ str: `${event.params.str} return` });
             else
                 await event.error(api.ErrorCode.validation_failed, "Invalid captcha");
         } else {
+            // send a response
             await event.return({ str: `${event.params.str} return` });
         }
     });
@@ -55,8 +59,9 @@ describe("Global method invocation", () => {
                     return { code: "not amogus" };
                 }
             });
-        } catch(ex) {
-            expect(ex).toEqual({ code: api.ErrorCode.validation_failed, message: "Invalid captcha" });
+        } catch({ code, message }) {
+            expect(code).toEqual(api.ErrorCode.validation_failed);
+            expect(message).toEqual("Invalid captcha");
         }
     });
 });
