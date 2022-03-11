@@ -7,7 +7,6 @@
         "sourceMap": true,
         "strict": true,
         "strictFunctionTypes": true,
-        "noImplicitReturns": true,
         "noImplicitThis": true,
         "noImplicitAny": true,
         "strictNullChecks": true,

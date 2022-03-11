@@ -11,3 +11,13 @@ This library provides an AMOGUS implementation for JS and TS in all major enviro
 ```
 npm i amogus-driver
 ```
+
+# Testing
+**Warning**: this repository uses a `pnpm` lock file, hence you can't substitute it for `npm` below.
+```
+git clone https://github.com/amogus-api/driver-ts
+cd driver-ts
+pnpm i
+pip3 install susc
+pnpm test
+```

@@ -1,0 +1,18 @@
+include impostor.sus
+
+globalmethod echo(0) {
+    str: Str;
+    returns {
+        str: Str;
+    }
+    confirmations { Captcha }
+}
+
+confirmation Captcha(0) {
+    request {
+        url: Str;
+    }
+    response {
+        code: Str;
+    }
+}
