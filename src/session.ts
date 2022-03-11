@@ -61,22 +61,24 @@ export class InvocationSessionEvent<M extends common.Method<any>> {
         this.params = this.method.params;
     }
     
-    async confirm<C extends common.Confirmation<any>>(conf: C, data: C["request"]): Promise<C["response"]> {
+    async confirm<C extends common.Confirmation<any>>(conf: C, data: C["request"]) {
         await this.session.writeSegment(new ConfRequestSegment(this.event.transaction.id,
             { ...conf, request: data }));
 
         // wait for response
-        return new Promise((resolve) => {
+        const response = await new Promise<C["response"]>((resolve) => {
             const cb = (event: TransactionEvent) => {
                 if(event.type !== "inbound")
                     return;
                 if(!(event.segment instanceof ConfResponseSegment))
                     return;
+
                 this.event.transaction.unsubscribe(cb);
                 resolve(event.segment.payload.response);
             }
             this.event.transaction.subscribe(cb);
         });
+        return response!;
     }
 
     async error(code: number, message: string): Promise<any> {
@@ -173,6 +175,12 @@ export abstract class Session extends common.EventHost<SessionEvent> {
         transaction?.notify({ type: "outbound", segment });
 
         await segment.write(this.stream);
+
+        // remove the transaction if it's finished
+        if(transaction.finalized()) {
+            this.transactions = this.transactions.filter(x => x.id !== transaction!.id);
+            transaction.notify({ type: "finished" });
+        }
     }
 
     async tranSync(): Promise<void> {
@@ -525,5 +533,7 @@ export class MethodErrorSegment extends Segment {
 
     override async encode(stream: common.Writable): Promise<void> {
         await stream.write(Buffer.from([3 << 6]));
+        await new Int(2).write(stream, this.payload.code);
+        await new Str().write(stream, this.payload.msg);
     }
 }
