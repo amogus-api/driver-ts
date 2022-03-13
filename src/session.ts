@@ -45,10 +45,10 @@ export class Transaction extends common.EventHost<TransactionEvent> {
 
 export class InvocationSessionEvent<M extends common.Method<any>> {
     readonly type = "method_invocation";
+    method: M;
+
     private event: TranSessionEvent;
     private session: Session;
-    method: M;
-    params: M["params"];
 
     constructor(event: TranSessionEvent, session: Session) {
         const minv = event.transaction.segments[0] as InvokeMethodSegment;
@@ -56,9 +56,8 @@ export class InvocationSessionEvent<M extends common.Method<any>> {
         this.event = event;
         this.session = session;
         // @ts-expect-error
-        // can be safely ignored
         this.method = minv.payload;
-        this.params = this.method.params;
+        this.method.sessionEvent = this;
     }
     
     async confirm<C extends common.Confirmation<any>>(conf: C, data: C["request"]) {
@@ -301,15 +300,16 @@ export class InvokeMethodSegment extends Segment {
 
     static override async decode(session: Session, stream: common.Readable, prefix: number, tran: number): Promise<InvokeMethodSegment> {
         // read IDs
-        var numericId = (await stream.read(1))[0];
-        var numericEntityId: number | undefined = undefined;
-        var entityId: number | undefined = undefined; // the ID used to reference an entity
+        let numericId = (await stream.read(1))[0];
+        let numericEntityId: number|undefined = undefined; // the signature of an entity type
+        let entityId: number|undefined = undefined; // the ID used to reference an entity
+
         if(numericId & 0x80) { // highest bit set
             numericEntityId = (await stream.read(1))[0];
-            numericId &= ~0x80;
             if(numericEntityId & 0x80) {
                 entityId = await new Int(8).read(stream);
-                numericId &= ~0x80;
+                numericEntityId &= ~0x80;
+                numericId &= ~0x80; // clear highest bit to indicate a dynamic method
             }
         }
 
@@ -338,11 +338,19 @@ export class InvokeMethodSegment extends Segment {
         await stream.write(Buffer.from([prefix]));
 
         // write IDs
-        await stream.write(Buffer.from([this.payload.numericId]));
-        if(this.payload.entityNumericId !== undefined)
-            await stream.write(Buffer.from([this.payload.entityNumericId]));
-        if(this.payload.entityId !== undefined)
-            await stream.write(Buffer.from([this.payload.entityId]));
+        let numId = this.payload.numericId;
+        let entNumId = this.payload.entityNumericId;
+        let entId = this.payload.entityId;
+        if(entNumId !== undefined) {
+            numId |= 0x80;
+            if(entId !== undefined)
+                entNumId |= 0x80;
+        }
+        await stream.write(Buffer.from([numId]));
+        if(entNumId !== undefined)
+            await stream.write(Buffer.from([entNumId]));
+        if(entId !== undefined)
+            await new Int(8).write(stream, entId);
 
         // write fields
         await array.write(stream, this.payload.params!);

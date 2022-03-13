@@ -1,6 +1,6 @@
 // This file contains common AMOGUS definitions
 
-import { Session } from "./session";
+import { Session, InvocationSessionEvent } from "./session";
 
 export type PeerType = "client" | "server";
 
@@ -73,15 +73,16 @@ export type FieldValue<Spec extends FieldSpec> =
 export abstract class Entity<Spec extends EntitySpec> extends Cloneable<Entity<Spec>> {
     readonly spec: Spec;
     readonly numericId: number;
-    readonly session?: Session;
-
     value?: FieldValue<Spec["fields"]>;
 
-    constructor(spec: Spec, numericId: number, session?: Session) {
+    protected static readonly session?: Session;
+    protected readonly dynSession?: Session;
+
+    constructor(spec: Spec, numericId: number, value?: FieldValue<Spec["fields"]>) {
         super();
         this.spec = spec;
         this.numericId = numericId;
-        this.session = session;
+        this.value = value;
     }
 }
 
@@ -94,11 +95,23 @@ export abstract class Method<Spec extends MethodSpec> extends Cloneable<Method<S
     returnVal?: FieldValue<Spec["returns"]>;
     entityId?: number;
 
+    sessionEvent?: InvocationSessionEvent<Method<Spec>>;
+
     constructor(spec: Spec, numericId: number, entityNumericId?: number) {
         super();
         this.spec = spec;
         this.numericId = numericId;
         this.entityNumericId = entityNumericId;
+    }
+
+    async return(ret: FieldValue<Spec["params"]>) {
+        return this.sessionEvent?.return(ret);
+    }
+    async error(code: number, message: string) {
+        return this.sessionEvent?.error(code, message);
+    }
+    async confirm<C extends Spec["confirmations"][number]>(conf: C, data: C["request"]) {
+        return this.sessionEvent?.confirm(conf, data);
     }
 }
 
@@ -135,4 +148,5 @@ export class EventHost<Event> {
     }
 }
 
-export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+// makes specific properties non-nullable
+export type NotNull<T, K extends keyof T> = Omit<T, K> & NonNullable<Pick<T, K>>;
