@@ -24,7 +24,7 @@ class DummyLink implements common.ReadableWritable {
                     return true;
                 }
                 return false;
-            }
+            };
             // check if data is in the buffer already
             if(!check()) {
                 const listener = (_: Buffer) => {
@@ -63,6 +63,6 @@ export function createDummyPair(specSpace: common.SpecSpace) {
     b.other = a;
     return {
         server: new DummyServer(specSpace, a),
-        client: new DummyClient(specSpace, b)
+        client: new DummyClient(specSpace, b),
     };
 }

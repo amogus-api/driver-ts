@@ -5,8 +5,8 @@ import { Session, InvocationSessionEvent } from "./session";
 export type PeerType = "client" | "server";
 
 export type range = [number, number];
-export function rangeCheck(range: range, val: number) {
-    const [low, hi] = range;
+export function rangeCheck(rng: range, val: number) {
+    const [low, hi] = rng;
     return val >= low && val <= hi;
 }
 
@@ -20,13 +20,13 @@ export interface Writable {
 }
 export type ReadableWritable = Readable & Writable;
 
-export abstract class Cloneable<T> {
-    clone(): T {
-        // @ts-expect-error
-        const obj = new this.constructor;
+export abstract class Cloneable {
+    clone(): this {
+        // @ts-expect-error it's unaware that it's a constructor
+        const obj: this = new this.constructor as this;
         for(const key in this)
             obj[key] = this[key];
-        return obj as T;
+        return obj;
     }
 }
 
@@ -70,7 +70,7 @@ export type FieldValue<Spec extends FieldSpec> =
           { [K in keyof Spec["required"]]: TsType<Spec["required"][K]> }
         & { [K in keyof Spec["optional"]]?: TsType<Spec["optional"][K][1]> };
 
-export abstract class Entity<Spec extends EntitySpec> extends Cloneable<Entity<Spec>> {
+export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
     value?: FieldValue<Spec["fields"]>;
@@ -86,7 +86,7 @@ export abstract class Entity<Spec extends EntitySpec> extends Cloneable<Entity<S
     }
 }
 
-export abstract class Method<Spec extends MethodSpec> extends Cloneable<Method<Spec>> {
+export abstract class Method<Spec extends MethodSpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
     readonly entityNumericId?: number;
@@ -115,7 +115,7 @@ export abstract class Method<Spec extends MethodSpec> extends Cloneable<Method<S
     }
 }
 
-export abstract class Confirmation<Spec extends ConfSpec> extends Cloneable<Confirmation<Spec>> {
+export abstract class Confirmation<Spec extends ConfSpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
 
@@ -131,8 +131,6 @@ export abstract class Confirmation<Spec extends ConfSpec> extends Cloneable<Conf
 
 export class EventHost<Event> {
     private subs: ((ev: Event) => any)[] = [];
-
-    constructor() { }
 
     subscribe(cb: (ev: Event) => any) {
         this.subs.push(cb);

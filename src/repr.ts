@@ -1,7 +1,7 @@
 // This file is responsible for sending and receiving
 // (representing) data types over streams
 
-import { range, rangeCheck, FieldSpec, Entity as EntityObj, DataRepr, FieldValue, Readable, Writable } from "./common";
+import { range, rangeCheck, FieldSpec, Entity as EntityObj, DataRepr, FieldValue, Readable, Writable, EntitySpec } from "./common";
 
 interface IntValidators {
     val?: range
@@ -18,7 +18,7 @@ export class Int extends DataRepr<number> {
 
     override async write(stream: Writable, value: number) {
         const data = Buffer.alloc(this.size);
-        for(var i = 0; i < this.size; i++) {
+        for(let i = 0; i < this.size; i++) {
             data[i] = value & 0xFF;
             value >>= 8;
         }
@@ -26,9 +26,9 @@ export class Int extends DataRepr<number> {
     }
 
     override async read(stream: Readable): Promise<number> {
-        var value = 0;
+        let value = 0;
         const data = await stream.read(this.size);
-        for(var i = 0; i < this.size; i++)
+        for(let i = 0; i < this.size; i++)
             value |= data[i] << ((this.size - i - 1) * 8);
         return value;
     }
@@ -87,8 +87,8 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
 
     spec: FieldSpec;
     private _hpSelLen: number; // high-packing mode selection bitfield length
-    hasOptional: boolean = false;
-    highPacking: boolean = false;
+    hasOptional = false;
+    highPacking = false;
 
     constructor(spec: Spec) {
         super();
@@ -96,14 +96,14 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
 
         // calculate overhead
         const maxOptional = Object.values(this.spec.optional)
-                .map(x => x[0])
-                .reduce((acc, x) => Math.max(acc, x), 0);
+            .map(x => x[0])
+            .reduce((acc, x) => Math.max(acc, x), 0);
         this._hpSelLen = Math.ceil(maxOptional / 8);
     }
 
     // chooses the optimal encoding mode for a value
     // returns `[at_least_one_optional, high_packing]`
-    chooseMode(value: any): [boolean, boolean] {
+    chooseMode(value: object): [boolean, boolean] {
         const optional = Object.keys(value).filter(k => k in this.spec.optional);
         if(optional.length == 0) {
             this.hasOptional = false;
@@ -132,28 +132,28 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
         if(this.highPacking) {
             // high-packing mode
             const sel = Buffer.alloc(this._hpSelLen);
-            for(const k in optional) {
+            for(const k of optional) {
                 const id = this.spec.optional[k][0];
                 const [byte, bit] = [Math.floor(id / 8), 7 - (id % 8)];
                 sel[byte] |= 1 << bit;
             }
             await stream.write(sel);
         } else {
-            new Int(1).write(stream, optional.length);
+            await new Int(1).write(stream, optional.length);
         }
 
         // write optional fields
-        for(const k in optional) {
+        for(const k of optional) {
             if(!(k in value))
                 continue;
             if(!this.highPacking)
-                new Int(1).write(stream, this.spec.optional[k][0]);
+                await new Int(1).write(stream, this.spec.optional[k][0]);
             this.spec.optional[k][1].write(stream, value[k]);
         }
     }
 
     override async read(stream: Readable): Promise<Value> {
-        var value: any = {};
+        const value: Record<string, unknown> = {};
 
         // read required fields
         for(const k in this.spec.required)
@@ -163,7 +163,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
         if(this.hasOptional) {
             if(this.highPacking) {
                 const select: Buffer = await stream.read(this._hpSelLen);
-                for(var i = 0; i < this._hpSelLen * 8; i++) {
+                for(let i = 0; i < this._hpSelLen * 8; i++) {
                     const [byte, bit] = [Math.floor(i / 8), 7 - (i % 8)];
                     if(select[byte] & (1 << bit)) {
                         const entry = Object.entries(this.spec.optional).find(x => x[1][0] == i);
@@ -175,7 +175,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
             } else {
                 const int1 = new Int(1);
                 const cnt = await int1.read(stream);
-                for(var i = 0; i < cnt; i++) {
+                for(let i = 0; i < cnt; i++) {
                     const id = await int1.read(stream);
                     const entry = Object.entries(this.spec.optional).find(x => x[1][0] == id);
                     if(!entry)
@@ -185,14 +185,18 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
             }
         }
 
-        return value;
+        return value as unknown as Value;
     }
 
     override validate(value: Value): boolean {
         for(const k in value) {
-            var repr: DataRepr<any>;
-            if(k in this.spec.required) repr = this.spec.required[k];
-                                   else repr = this.spec.optional[k][1];
+            let repr: DataRepr<any>;
+
+            if(k in this.spec.required)
+                repr = this.spec.required[k];
+            else
+                repr = this.spec.optional[k][1];
+
             if(!repr.validate(value[k]))
                 return false;
         }
@@ -201,25 +205,26 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
     }
 }
 
-export class Entity extends DataRepr<Required<EntityObj<any>>> {
-    private _definitions: { [id: number]: EntityObj<any> };
+type DefiniteEntity = Required<EntityObj<EntitySpec>>;
+export class Entity extends DataRepr<DefiniteEntity> {
+    private _definitions: { [id: number]: EntityObj<EntitySpec> };
 
-    constructor(definitions: { [id: number]: EntityObj<any> }) {
+    constructor(definitions: { [id: number]: EntityObj<EntitySpec> }) {
         super();
         this._definitions = definitions;
     }
 
-    override async write(stream: Writable, value: EntityObj<any>) {
+    override async write(stream: Writable, value: DefiniteEntity) {
         const array = new FieldArray(value.spec.fields);
         const [h, o] = array.chooseMode(value);
         const modeMask = (h ? 128 : 0) | (o ? 64 : 0);
         await new Int(1).write(stream, value.numericId | modeMask);
-        await array.write(stream, value.value!);
+        await array.write(stream, value.value);
     }
 
-    override async read(stream: Readable): Promise<Required<EntityObj<any>>> {
+    override async read(stream: Readable): Promise<DefiniteEntity> {
         // read id
-        var numericId = await new Int(1).read(stream);
+        let numericId = await new Int(1).read(stream);
         const mode: [boolean, boolean] = [(numericId & 64) > 0, (numericId & 128) > 0];
         numericId &= ~(128 | 64);
 
@@ -228,13 +233,12 @@ export class Entity extends DataRepr<Required<EntityObj<any>>> {
         array.setMode(mode);
         const value = await array.read(stream);
         entity.value = value;
-        // TS is not smart enough to figure out that `value` is not undefined
-        // @ts-expect-error
+        // @ts-expect-error TS is not smart enough to figure out that `value` is not undefined
         return entity;
     }
 
-    override validate(value: Required<EntityObj<any>>) {
-        return new FieldArray(value.spec.fields).validate(value.value!);
+    override validate(value: DefiniteEntity) {
+        return new FieldArray(value.spec.fields).validate(value.value);
     }
 }
 

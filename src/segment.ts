@@ -17,16 +17,16 @@ export abstract class Segment {
     }
 
     static decodePrefix(prefix: number): [boolean, boolean] {
-        return [(prefix & 16) > 0, (prefix & 32) > 0]
+        return [(prefix & 16) > 0, (prefix & 32) > 0];
     }
-    
+
     async encode(_stream: common.Writable): Promise<void> {
         throw new Error("Not implemented");
     }
 
     async write(stream: common.Writable) {
         await stream.write(Buffer.from([this.transactionId]));
-        this.encode(stream);
+        await this.encode(stream);
     }
 
     static async read(session: Session, stream: common.Readable, boundTo: common.PeerType): Promise<Segment> {
@@ -36,14 +36,14 @@ export abstract class Segment {
                 InvokeMethodSegment,
                 UpdateEntitySegment,
                 ConfResponseSegment,
-                TranSynSegment
+                TranSynSegment,
             ],
             "client": [
                 MethodReturnSegment,
                 EntityUpdateSegment,
                 ConfRequestSegment,
-                MethodErrorSegment
-            ]
+                MethodErrorSegment,
+            ],
         }[boundTo][prefix >> 6];
         return await concreteClass.decode(session, stream, prefix, tran);
     }
@@ -75,8 +75,8 @@ export class InvokeMethodSegment extends Segment {
 
         // get method template
         const methodSet = numericEntityId === undefined
-                ? session.specSpace.globalMethods
-                : session.specSpace.entities[numericEntityId].spec.methods;
+            ? session.specSpace.globalMethods
+            : session.specSpace.entities[numericEntityId].spec.methods;
         const method = methodSet[numericId].clone();
 
         // read fields
@@ -90,9 +90,12 @@ export class InvokeMethodSegment extends Segment {
     }
 
     override async encode(stream: common.Writable): Promise<void> {
+        if(!this.payload.params)
+            throw new Error("Null payload");
+
         // write prefix
         const array = new FieldArray(this.payload.spec.params);
-        const [h, o] = array.chooseMode(this.payload.params!);
+        const [h, o] = array.chooseMode(this.payload.params);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (0 << 6) | modeMask;
         await stream.write(Buffer.from([prefix]));
@@ -100,12 +103,14 @@ export class InvokeMethodSegment extends Segment {
         // write IDs
         let numId = this.payload.numericId;
         let entNumId = this.payload.entityNumericId;
-        let entId = this.payload.entityId;
+        const entId = this.payload.entityId;
+
         if(entNumId !== undefined) {
             numId |= 0x80;
             if(entId !== undefined)
                 entNumId |= 0x80;
         }
+
         await stream.write(Buffer.from([numId]));
         if(entNumId !== undefined)
             await stream.write(Buffer.from([entNumId]));
@@ -113,15 +118,16 @@ export class InvokeMethodSegment extends Segment {
             await new Int(8).write(stream, entId);
 
         // write fields
-        await array.write(stream, this.payload.params!);
+        await array.write(stream, this.payload.params);
     }
 }
 
+type DefiniteEntity = Required<common.Entity<common.EntitySpec>>;
 export class UpdateEntitySegment extends Segment {
     readonly boundTo = "server";
-    payload: common.Entity<common.EntitySpec>;
+    payload: DefiniteEntity;
 
-    constructor(tran: number, payload: common.Entity<common.EntitySpec>) {
+    constructor(tran: number, payload: DefiniteEntity) {
         super(tran);
         this.payload = payload;
     }
@@ -149,7 +155,9 @@ export class ConfResponseSegment extends Segment {
     static override async decode(session: Session, stream: common.Readable, prefix: number, tran: number): Promise<ConfResponseSegment> {
         // find spec
         const transaction = session.transactions.find(x => x.id == tran);
-        const conf = ([...transaction!.segments].reverse()[0] as ConfRequestSegment).payload;
+        if(!transaction)
+            throw new Error("Unexpected CRSP segment");
+        const conf = ([...transaction.segments].reverse()[0] as ConfRequestSegment).payload;
 
         // read fields
         const array = new FieldArray(conf.spec.response);
@@ -161,15 +169,18 @@ export class ConfResponseSegment extends Segment {
     }
 
     override async encode(stream: common.Writable): Promise<void> {
+        if(!this.payload.response)
+            throw new Error("Null payload");
+
         // write prefix
         const array = new FieldArray(this.payload.spec.response);
-        const [h, o] = array.chooseMode(this.payload.response!);
+        const [h, o] = array.chooseMode(this.payload.response);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (2 << 6) | modeMask;
         await stream.write(Buffer.from([prefix]));
 
         // write fields
-        await array.write(stream, this.payload.response!);
+        await array.write(stream, this.payload.response);
     }
 }
 
@@ -201,7 +212,9 @@ export class MethodReturnSegment extends Segment {
     static override async decode(session: Session, stream: common.Readable, prefix: number, tran: number): Promise<MethodReturnSegment> {
         // find spec
         const transaction = session.transactions.find(x => x.id == tran);
-        const method = (transaction!.segments[0] as InvokeMethodSegment).payload.clone();
+        if(!transaction)
+            throw new Error("Unexpected MRET segment");
+        const method = (transaction.segments[0] as InvokeMethodSegment).payload.clone();
         method.params = undefined;
 
         // read fields
@@ -214,23 +227,26 @@ export class MethodReturnSegment extends Segment {
     }
 
     override async encode(stream: common.Writable): Promise<void> {
+        if(!this.payload.returnVal)
+            throw new Error("Null payload");
+
         // write prefix
         const array = new FieldArray(this.payload.spec.returns);
-        const [h, o] = array.chooseMode(this.payload.returnVal!);
+        const [h, o] = array.chooseMode(this.payload.returnVal);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (0 << 6) | modeMask;
         await stream.write(Buffer.from([prefix]));
 
         // write fields
-        await array.write(stream, this.payload.returnVal!);
+        await array.write(stream, this.payload.returnVal);
     }
 }
 
 export class EntityUpdateSegment extends Segment { // !== UpdateEntitySegment
     readonly boundTo = "client";
-    payload: common.Entity<common.EntitySpec>;
+    payload: DefiniteEntity;
 
-    constructor(tran: number, payload: common.Entity<common.EntitySpec>) {
+    constructor(tran: number, payload: DefiniteEntity) {
         super(tran);
         this.payload = payload;
     }
@@ -270,15 +286,18 @@ export class ConfRequestSegment extends Segment {
     }
 
     override async encode(stream: common.Writable): Promise<void> {
+        if(!this.payload.request)
+            throw new Error("Null payload");
+
         // write prefix
         const array = new FieldArray(this.payload.spec.request);
-        const [h, o] = array.chooseMode(this.payload.request!);
+        const [h, o] = array.chooseMode(this.payload.request);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (2 << 6) | modeMask | this.payload.numericId;
         await stream.write(Buffer.from([prefix]));
 
         // write fields
-        await array.write(stream, this.payload.request!);
+        await array.write(stream, this.payload.request);
     }
 }
 
@@ -294,7 +313,7 @@ export class MethodErrorSegment extends Segment {
     static override async decode(_session: Session, stream: common.Readable, _prefix: number, tran: number): Promise<MethodErrorSegment> {
         const payload = await new FieldArray({
             required: { code: new Int(2), msg: new Str() },
-            optional: { }
+            optional: { },
         }).read(stream);
         return new MethodErrorSegment(tran, payload);
     }

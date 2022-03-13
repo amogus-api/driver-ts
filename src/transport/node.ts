@@ -25,7 +25,7 @@ class TlsStream implements common.ReadableWritable {
                     return true;
                 }
                 return false;
-            }
+            };
             // check if data is in the buffer already
             if(!check()) {
                 const listener = (_: Buffer) => {
