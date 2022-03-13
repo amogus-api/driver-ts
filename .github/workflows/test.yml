@@ -33,5 +33,4 @@ jobs:
       run: pip install susc
 
     - run: pnpm i
-    - run: pnpm link .
     - run: pnpm test
