@@ -3,27 +3,28 @@ import * as api from "./globalMethod_output/ts/index";
 
 describe("Global method invocation", () => {
     let serverAskCaptcha = false;
-    const { client, server } = amogus.transport.universal.createDummyPair(api.specSpace);
-    const clientSession = api.bind(client);
+    const { client, server } = amogus.transport.universal.createDummyPair(api.$specSpace);
+    const clientSession = api.$bind(client);
 
     // server transaction listener
     server.subscribe(async (event) => {
         // only process echo() invocations
         if(!(event instanceof amogus.session.InvocationSessionEvent))
             return;
-        if(!(event.method instanceof api.Echo))
+        const method = event.method;
+        if(!(method instanceof api.Echo))
             return;
 
         if(serverAskCaptcha) {
             // ask captcha and compare solution
             const { code } = await event.confirm(new api.Captcha(), { url: "https://example.com/amogus.png" });
             if(code === "amogus")
-                await event.return({ str: `${event.params.str} return` });
+                await event.return({ str: `${method.params!.str} return` });
             else
                 await event.error(api.ErrorCode.validation_failed, "Invalid captcha");
         } else {
             // send a response
-            await event.return({ str: `${event.params.str} return` });
+            await event.return({ str: `${method.params!.str} return` });
         }
     });
 
