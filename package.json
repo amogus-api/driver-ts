@@ -6,7 +6,7 @@
   "module": "lib/index.esm.js",
   "scripts": {
     "build": "rollup -c",
-    "test:sus": "susc -l ts __tests__/*.sus && sed -i 's/amogus-driver/..\\/..\\/..\\/lib/g' __tests__/*_output/ts/index.ts",
+    "test:sus": "susc -l ts __tests__/*.sus && sed -i 's/amogus-driver/..\\/..\\/..\\/lib\\/index/g' __tests__/*_output/ts/index.ts",
     "test": "pnpm build && pnpm test:sus && jest"
   },
   "files": [

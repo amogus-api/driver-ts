@@ -1,4 +1,4 @@
-import * as amogus from "../lib";
+import * as amogus from "../lib/index";
 import * as api from "./globalMethod_output/ts/index";
 
 describe("Global method invocation", () => {
