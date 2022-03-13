@@ -1,8 +1,8 @@
 <p align="center"><img src="https://github.com/amogus-api/info/raw/master/logos/logo_color_on_white.png" height="128"/></p>
 
-![Sus level](https://img.shields.io/badge/sus%20level-150%25-red)
 ![License](https://img.shields.io/github/license/amogus-api/driver-ts)
 ![Version](https://img.shields.io/npm/v/amogus-driver)
+![Codecov](https://img.shields.io/codecov/c/github/amogus-api/driver-ts)
 ![Downloads](https://img.shields.io/npm/dm/amogus-driver)
 ![PRs and issues](https://img.shields.io/badge/PRs%20and%20issues-welcome-brightgreen)
 
