@@ -1,4 +1,4 @@
-import * as amogus from "amogus-driver";
+import * as amogus from "../lib";
 import * as api from "./globalMethod_output/ts/index";
 
 describe("Global method invocation", () => {

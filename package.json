@@ -6,7 +6,8 @@
   "module": "lib/index.esm.js",
   "scripts": {
     "build": "rollup -c",
-    "test": "pnpm build && susc -l ts __tests__/*.sus && jest"
+    "test:sus": "susc -l ts __tests__/*.sus && sed -i 's/amogus-driver/..\\/..\\/..\\/lib/g' __tests__/*_output/ts/index.ts",
+    "test": "pnpm build && pnpm test:sus && jest"
   },
   "files": [
     "lib",
@@ -33,8 +34,7 @@
     "rollup": "^2.60.2",
     "rollup-plugin-typescript2": "^0.31.1",
     "ts-jest": "^27.1.3",
-    "typescript": "^4.6.2",
-    "amogus-driver": "link:."
+    "typescript": "^4.6.2"
   },
   "dependencies": {
     "tslib": "^2.3.1"

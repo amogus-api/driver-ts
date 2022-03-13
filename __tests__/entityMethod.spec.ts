@@ -1,4 +1,4 @@
-import * as amogus from "amogus-driver";
+import * as amogus from "../lib";
 import * as api from "./entityMethod_output/ts/index";
 
 describe("Entity method invocation", () => {
