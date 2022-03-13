@@ -7,7 +7,8 @@
   "scripts": {
     "build": "rollup -c",
     "test:sus": "susc -l ts __tests__/*.sus && sed -i 's/amogus-driver/..\\/..\\/..\\/src\\/index/g' __tests__/*_output/ts/index.ts",
-    "test": "pnpm test:sus && jest --coverage"
+    "test": "pnpm test:sus && jest --coverage",
+    "lint": "pnpm eslint src --ext .ts"
   },
   "files": [
     "lib",
@@ -28,12 +29,19 @@
   },
   "homepage": "https://github.com/amogus-api/driver-ts#readme",
   "devDependencies": {
+    "@types/bluebird": "^3.5.36",
     "@types/jest": "^27.4.1",
     "@types/node": "^17.0.7",
+    "@typescript-eslint/eslint-plugin": "^5.14.0",
+    "@typescript-eslint/parser": "^5.14.0",
+    "eslint": "^8.11.0",
+    "eslint-config-airbnb-typescript": "^16.1.2",
+    "eslint-plugin-import": "^2.25.4",
     "jest": "^27.5.1",
     "rollup": "^2.60.2",
     "rollup-plugin-typescript2": "^0.31.1",
     "ts-jest": "^27.1.3",
+    "ts-toolbelt": "^9.6.0",
     "typescript": "^4.6.2"
   },
   "dependencies": {
