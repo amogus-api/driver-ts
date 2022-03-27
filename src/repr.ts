@@ -43,6 +43,25 @@ export class Int extends DataRepr<number> {
     }
 }
 
+export class Bool extends DataRepr<boolean> {
+    constructor(_validators?: any) {
+        super();
+    }
+
+    override async write(stream: Writable, value: boolean) {
+        await new Int(1).write(stream, value ? 1 : 0);
+    }
+
+    override async read(stream: Readable): Promise<boolean> {
+        const val = await new Int(1).read(stream);
+        return val !== 0;
+    }
+
+    override validate(_value: boolean): boolean {
+        return true;
+    }
+}
+
 interface StrValidators {
     len?: range;
     match?: RegExp;

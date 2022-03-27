@@ -104,7 +104,7 @@ export abstract class Method<Spec extends MethodSpec> extends Cloneable {
         this.entityNumericId = entityNumericId;
     }
 
-    async return(ret: FieldValue<Spec["params"]>) {
+    async return(ret: FieldValue<Spec["returns"]>) {
         return this.sessionEvent?.return(ret);
     }
     async error(code: number, message: string) {

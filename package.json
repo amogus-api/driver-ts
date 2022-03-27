@@ -19,8 +19,12 @@
     "url": "https://github.com/amogus-api/driver-ts.git"
   },
   "keywords": [
+    "amogus",
     "api",
-    "protocol"
+    "protocol",
+    "binary",
+    "front-end",
+    "backend"
   ],
   "author": "portasynthinca3",
   "license": "BSD-3-Clause",
