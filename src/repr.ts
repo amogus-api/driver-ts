@@ -105,7 +105,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
     // The line above just makes sure that we only pass fields with valid names and values to the functions
 
     spec: FieldSpec;
-    private _hpSelLen: number; // high-packing mode selection bitfield length
+    private readonly _hpSelLen: number; // high-packing mode selection bitfield length
     hasOptional = false;
     highPacking = false;
 
@@ -117,7 +117,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
         const maxOptional = Object.values(this.spec.optional)
             .map(x => x[0])
             .reduce((acc, x) => Math.max(acc, x), 0);
-        this._hpSelLen = Math.ceil(maxOptional / 8);
+        this._hpSelLen = Math.ceil((maxOptional + 3) / 8);
     }
 
     // chooses the optimal encoding mode for a value
@@ -126,12 +126,12 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
         const optional = Object.keys(value).filter(k => k in this.spec.optional);
         if(optional.length == 0) {
             this.hasOptional = false;
-            this._hpSelLen = 0;
         } else {
             this.hasOptional = true;
             const normalOverhead = 1 + optional.length;
-            this._hpSelLen = (normalOverhead > this._hpSelLen) ? 0 : this._hpSelLen;
+            this.highPacking = normalOverhead > this._hpSelLen;
         }
+
         return [this.hasOptional, this.highPacking];
     }
 
@@ -142,7 +142,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
     override async write(stream: Writable, value: Value) {
         // write required fields
         for(const k in this.spec.required)
-            this.spec.required[k].write(stream, value[k]);
+            await this.spec.required[k].write(stream, value[k]);
 
         // write prefix for optional fields
         const optional = Object.keys(value).filter(k => k in this.spec.optional);
@@ -167,7 +167,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
                 continue;
             if(!this.highPacking)
                 await new Int(1).write(stream, this.spec.optional[k][0]);
-            this.spec.optional[k][1].write(stream, value[k]);
+            await this.spec.optional[k][1].write(stream, value[k]);
         }
     }
 
@@ -188,7 +188,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
                         const entry = Object.entries(this.spec.optional).find(x => x[1][0] == i);
                         if(!entry)
                             throw new Error(`Met field with unknown id "${i}" in high-packing mode`);
-                        value[entry[0]] = entry[1][1].read(stream);
+                        value[entry[0]] = await entry[1][1].read(stream);
                     }
                 }
             } else {
@@ -199,7 +199,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
                     const entry = Object.entries(this.spec.optional).find(x => x[1][0] == id);
                     if(!entry)
                         throw new Error(`Met field with unknown id "${id}" in normal mode`);
-                    value[entry[0]] = entry[1][1].read(stream);
+                    value[entry[0]] = await entry[1][1].read(stream);
                 }
             }
         }
