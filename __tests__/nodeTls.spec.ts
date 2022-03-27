@@ -6,7 +6,7 @@ import * as api from "./globalMethod_output/ts/index";
 describe("Node TLS", () => {
     test("TLS", async () => {
         // set up a server
-        new TlsListener(api.$specSpace, {
+        const listener = new TlsListener(api.$specSpace, {
             key: fs.readFileSync('__tests__/certs/server.key'),
             cert: fs.readFileSync('__tests__/certs/server.cert'),
             port: 1234,
@@ -35,5 +35,9 @@ describe("Node TLS", () => {
         // call echo()
         const result = await client.echo({ str: "hello" });
         expect(result.str).toBe("hello return");
+
+        // close
+        await listener.close();
+        await client.$close();
     });
 });

@@ -116,6 +116,7 @@ export const $specSpace = {
 export function $bind(session: amogus.session.Session) {
 	return {
 		session,
+		$close: async () => await session.stop(),
 		/*** METHODS ***/
 
 		echo,

@@ -54,7 +54,8 @@ class TlsStream implements common.ReadableWritable {
 }
 
 export class TlsClient extends Session {
-    stream: TlsStream;
+    private readonly socket;
+    readonly stream;
 
     constructor(specSpace: common.SpecSpace, tlsOptions: tls.ConnectionOptions) {
         const socket = tls.connect(tlsOptions);
@@ -62,21 +63,41 @@ export class TlsClient extends Session {
 
         super(specSpace, stream, "client");
         this.stream = stream;
+        this.socket = socket;
+    }
+
+    override async stop() {
+        await super.stop();
+        this.socket.destroy();
     }
 }
 
 export class TlsServer extends Session {
+    private readonly socket;
+
     constructor(specSpace: common.SpecSpace, socket: tls.TLSSocket) {
         super(specSpace, new TlsStream(socket), "server");
+        this.socket = socket;
+    }
+
+    override async stop() {
+        await super.stop();
+        this.socket.destroy();
     }
 }
 
 export class TlsListener {
+    private readonly server;
+
     constructor(specSpace: common.SpecSpace, options: tls.TlsOptions & { port: number, host?: string }, cb: (socket: TlsServer) => void) {
-        const server = tls.createServer(options, (socket) => {
+        this.server = tls.createServer(options, (socket) => {
             const session = new TlsServer(specSpace, socket);
             cb(session);
         });
-        server.listen(options.port, options.host);
+        this.server.listen(options.port, options.host);
+    }
+
+    async close() {
+        this.server.close();
     }
 }
