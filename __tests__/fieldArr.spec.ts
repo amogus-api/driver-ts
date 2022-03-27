@@ -97,4 +97,30 @@ describe("Field arrays", () => {
             expect(repr.validate(value)).toEqual(true);
         }
     });
+
+    test("Invalid ids", async () => {
+        const [a, b] = createDummyLinks();
+        const repr = new amogus.repr.FieldArray({
+            required: { },
+            optional: { foo: [0, new amogus.repr.Int(1)] }
+        });
+
+        repr.setMode([true, false]);
+        await a.write(Buffer.from([123, 123]));
+        try {
+            await repr.read(b);
+            fail("Expected error");
+        } catch(e) {
+            expect((e as Error).message).toEqual("Met field with unknown id \"123\" in normal mode");
+        }
+        
+        repr.setMode([true, true]);
+        await a.write(Buffer.from([0x40, 123]));
+        try {
+            await repr.read(b);
+            fail("Expected error");
+        } catch(e) {
+            expect((e as Error).message).toEqual("Met field with unknown id \"1\" in high-packing mode");
+        }
+    });
 });

@@ -43,4 +43,17 @@ describe("Atomic data type validation", () => {
             expect(repr.validate(value)).toEqual(valid);
         }
     });
+
+    test("Bool", async () => {
+        const [a, b] = createDummyLinks();
+        const repr = new amogus.repr.Bool();
+
+        const values = [false, true];
+        for(const val of values) {
+            await repr.write(a, val);
+            const value = await repr.read(b);
+            expect(value).toEqual(val);
+            expect(repr.validate(value)).toEqual(true);
+        }
+    });
 });
