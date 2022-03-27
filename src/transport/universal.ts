@@ -57,10 +57,15 @@ class DummyServer extends Session {
     }
 }
 
-export function createDummyPair(specSpace: common.SpecSpace) {
+export function createDummyLinks() {
     const [a, b] = [new DummyLink(), new DummyLink()];
     a.other = b;
     b.other = a;
+    return [a, b];
+}
+
+export function createDummyPair(specSpace: common.SpecSpace) {
+    const [a, b] = createDummyLinks();
     return {
         server: new DummyServer(specSpace, a),
         client: new DummyClient(specSpace, b),
