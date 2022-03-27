@@ -175,8 +175,11 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
         const value: Record<string, unknown> = {};
 
         // read required fields
-        for(const k in this.spec.required)
-            value[k] = await this.spec.required[k].read(stream);
+        for(const k in this.spec.required) {
+            const repr = this.spec.required[k];
+            repr.specSpace = this.specSpace;
+            value[k] = await repr.read(stream);
+        }
 
         // read optional fields
         if(this.hasOptional) {
@@ -188,7 +191,10 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
                         const entry = Object.entries(this.spec.optional).find(x => x[1][0] == i);
                         if(!entry)
                             throw new Error(`Met field with unknown id "${i}" in high-packing mode`);
-                        value[entry[0]] = await entry[1][1].read(stream);
+
+                        const repr = entry[1][1];
+                        repr.specSpace = this.specSpace;
+                        value[entry[0]] = await repr.read(stream);
                     }
                 }
             } else {
@@ -199,7 +205,10 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
                     const entry = Object.entries(this.spec.optional).find(x => x[1][0] == id);
                     if(!entry)
                         throw new Error(`Met field with unknown id "${id}" in normal mode`);
-                    value[entry[0]] = await entry[1][1].read(stream);
+
+                    const repr = entry[1][1];
+                    repr.specSpace = this.specSpace;
+                    value[entry[0]] = await repr.read(stream);
                 }
             }
         }
@@ -226,13 +235,6 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
 
 type DefiniteEntity = Required<EntityObj<EntitySpec>>;
 export class Entity extends DataRepr<DefiniteEntity> {
-    private _definitions: { [id: number]: EntityObj<EntitySpec> };
-
-    constructor(definitions: { [id: number]: EntityObj<EntitySpec> }) {
-        super();
-        this._definitions = definitions;
-    }
-
     override async write(stream: Writable, value: DefiniteEntity) {
         const array = new FieldArray(value.spec.fields);
         const [h, o] = array.chooseMode(value);
@@ -247,9 +249,13 @@ export class Entity extends DataRepr<DefiniteEntity> {
         const mode: [boolean, boolean] = [(numericId & 64) > 0, (numericId & 128) > 0];
         numericId &= ~(128 | 64);
 
-        const entity = this._definitions[numericId].clone();
+        if(!this.specSpace?.entities)
+            throw new Error("No entity definitions provided");
+
+        const entity = this.specSpace.entities[numericId].clone();
         const array = new FieldArray(entity.spec.fields);
         array.setMode(mode);
+        array.specSpace = this.specSpace;
         const value = await array.read(stream);
         entity.value = value;
         // @ts-expect-error TS is not smart enough to figure out that `value` is not undefined

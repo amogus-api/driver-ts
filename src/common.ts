@@ -31,6 +31,8 @@ export abstract class Cloneable {
 }
 
 export abstract class DataRepr<T> {
+    specSpace?: SpecSpace;
+
     abstract write(stream: Writable, value: T): Promise<void>;
     abstract read(stream: Readable): Promise<T>;
     abstract validate(value: T): boolean;

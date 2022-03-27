@@ -85,6 +85,7 @@ export class InvokeMethodSegment extends Segment {
         // read fields
         const array = new FieldArray(method.spec.params);
         array.setMode(Segment.decodePrefix(prefix));
+        array.specSpace = session.specSpace;
         const value = await array.read(stream);
 
         method.params = value;
@@ -136,13 +137,17 @@ export class UpdateEntitySegment extends Segment {
     }
 
     static override async decode(session: Session, stream: common.Readable, _prefix: number, tran: number): Promise<UpdateEntitySegment> {
-        const value = await new EntityRepr(session.specSpace.entities).read(stream);
+        const repr = new EntityRepr();
+        repr.specSpace = session.specSpace;
+        const value = await repr.read(stream);
         return new UpdateEntitySegment(tran, value);
     }
 
     override async encode(stream: common.Writable): Promise<void> {
         await stream.write(Buffer.from([1 << 6]));
-        await new EntityRepr({ [this.payload.numericId]: this.payload }).write(stream, this.payload);
+        const repr = new EntityRepr();
+        repr.specSpace = { entities: { [this.payload.numericId]: this.payload }, specVersion: 1, globalMethods: {}, confirmations: {} };
+        await repr.write(stream, this.payload);
     }
 }
 
@@ -165,6 +170,7 @@ export class ConfResponseSegment extends Segment {
         // read fields
         const array = new FieldArray(conf.spec.response);
         array.setMode(Segment.decodePrefix(prefix));
+        array.specSpace = session.specSpace;
         const value = await array.read(stream);
 
         conf.response = value;
@@ -206,6 +212,7 @@ export class MethodReturnSegment extends Segment {
 
         // read fields
         const array = new FieldArray(method.spec.returns);
+        array.specSpace = session.specSpace;
         array.setMode(Segment.decodePrefix(prefix));
         const value = await array.read(stream);
 
@@ -239,13 +246,17 @@ export class EntityUpdateSegment extends Segment { // !== UpdateEntitySegment
     }
 
     static override async decode(session: Session, stream: common.Readable, _prefix: number, tran: number): Promise<EntityUpdateSegment> {
-        const value = await new EntityRepr(session.specSpace.entities).read(stream);
+        const repr = new EntityRepr();
+        repr.specSpace = session.specSpace;
+        const value = await repr.read(stream);
         return new EntityUpdateSegment(tran, value);
     }
 
     override async encode(stream: common.Writable): Promise<void> {
         await stream.write(Buffer.from([1 << 6]));
-        await new EntityRepr({ [this.payload.numericId]: this.payload }).write(stream, this.payload);
+        const repr = new EntityRepr();
+        repr.specSpace = { entities: { [this.payload.numericId]: this.payload }, specVersion: 1, globalMethods: {}, confirmations: {} };
+        await repr.write(stream, this.payload);
     }
 }
 

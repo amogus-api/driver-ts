@@ -1,0 +1,58 @@
+include impostor.sus
+
+entity Test(0) {
+    id: Int(8);
+    
+    staticmethod static_echo(0) {
+        str: Str;
+        returns {
+            str: Str;
+        }
+    }
+
+    method dynamic_echo(0) {
+        str: Str;
+        returns {
+            str: Str;
+        }
+    }
+}
+
+entity MassiveFields(1) {
+    id: Int(8);
+
+    a: opt(0) Int(2);
+    b: opt(1) Int(2);
+    c: opt(2) Int(2);
+    d: opt(3) Int(2);
+    e: opt(4) Int(2);
+    f: opt(5) Int(2);
+    g: opt(6) Int(2);
+    h: opt(7) Int(2);
+    i: opt(8) Int(2);
+    j: opt(9) Int(2);
+    k: opt(10) Int(2);
+    l: opt(11) Int(2);
+    m: opt(12) Int(2);
+    n: opt(13) Int(2);
+    o: opt(14) Int(2);
+    p: opt(15) Int(2);
+    q: opt(16) Int(2);
+    r: opt(17) Int(2);
+    s: opt(18) Int(2);
+    t: opt(19) Int(2);
+    u: opt(20) Int(2);
+    v: opt(21) Int(2);
+    w: opt(22) Int(2);
+    x: opt(23) Int(2);
+    y: opt(24) Int(2);
+    z: opt(25) Int(2);
+
+    staticmethod get(127) {
+        id: Int(8);
+        
+        returns {
+            entity: Entity;
+        }
+    }
+}
