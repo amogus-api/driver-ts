@@ -15,10 +15,10 @@ class TlsStream implements common.ReadableWritable {
         });
     }
 
-    read(cnt: number): Promise<Buffer> {
+    async read(cnt: number): Promise<Buffer> {
         return new Promise((resolve, _reject) => {
             const check = () => {
-                if(this.readBuf.length <= cnt) {
+                if(this.readBuf.length >= cnt) {
                     const data = this.readBuf.slice(0, cnt);
                     this.readBuf = this.readBuf.slice(cnt);
                     resolve(data);
@@ -37,7 +37,7 @@ class TlsStream implements common.ReadableWritable {
         });
     }
 
-    write(data: Buffer): Promise<void> {
+    async write(data: Buffer): Promise<void> {
         return new Promise((resolve, reject) => {
             this.socket.write(data, (err) => {
                 if(err)
@@ -62,5 +62,21 @@ export class TlsClient extends Session {
 
         super(specSpace, stream, "client");
         this.stream = stream;
+    }
+}
+
+export class TlsServer extends Session {
+    constructor(specSpace: common.SpecSpace, socket: tls.TLSSocket) {
+        super(specSpace, new TlsStream(socket), "server");
+    }
+}
+
+export class TlsListener {
+    constructor(specSpace: common.SpecSpace, options: tls.TlsOptions & { port: number, host?: string }, cb: (socket: TlsServer) => void) {
+        const server = tls.createServer(options, (socket) => {
+            const session = new TlsServer(specSpace, socket);
+            cb(session);
+        });
+        server.listen(options.port, options.host);
     }
 }
