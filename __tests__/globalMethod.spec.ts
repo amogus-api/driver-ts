@@ -50,6 +50,17 @@ describe("Global method invocation", () => {
     });
 
 
+    test("confirmation request with no callback", async () => {
+        try {
+            serverAskCaptcha = true;
+            await clientSession.echo({ str: "Hello, World!" });
+            fail("Expected error");
+        } catch(e) {
+            expect((e as Error).message).toEqual("no confirmationCallback supplied but a ConfRequest segment was received");
+        }
+    });
+
+
     test("error return", async () => {
         serverAskCaptcha = true;
 

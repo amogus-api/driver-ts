@@ -11,8 +11,7 @@ export type IncompleteTransactionEvent =
     { type: "created" } |
     { type: "inbound", segment: segment.Segment } |
     { type: "outbound", segment: segment.Segment } |
-    { type: "finished" } |
-    { type: "cancelled" };
+    { type: "finished" };
 export type TransactionEvent = IncompleteTransactionEvent & { tran: Transaction };
 export class Transaction extends common.EventHost<TransactionEvent> {
     session: Session;
@@ -140,12 +139,6 @@ export abstract class Session extends common.EventHost<SessionEvent> {
     async readSegment(): Promise<segment.Segment> {
         const segm = await segment.Segment.read(this, this.stream, this.self);
 
-        // if the segment is a TranSyn, forget all transactions and read the next segment
-        if(segm instanceof segment.TranSynSegment) {
-            this.transactions = [];
-            return await this.readSegment();
-        }
-
         // add the segment to its transaction
         let transaction = this.transactions.find(x => x.id === segm.transactionId);
         // create the object for new transactions
@@ -184,19 +177,12 @@ export abstract class Session extends common.EventHost<SessionEvent> {
         }
     }
 
-    async tranSync(): Promise<void> {
-        for(const transaction of this.transactions)
-            transaction.notify({ type: "cancelled" });
-        this.transactions = [];
-        await this.writeSegment(new segment.TranSynSegment(0));
-    }
-
     async createTransaction(initSegment: segment.Segment): Promise<Transaction> {
         // get the first free id
         const allIds = this.transactions.map(x => x.id);
         const freeIds = Array.from({ length: 256 }, (_, i) => i).filter(id => !(id in allIds));
         if(!freeIds.length)
-            throw new Error("All transaction slots are taken. Consider doing a TranSync");
+            throw new Error("All transaction slots are taken");
         const id = freeIds[0];
 
         // create the transaction and remember it
@@ -214,13 +200,10 @@ export abstract class Session extends common.EventHost<SessionEvent> {
     ): Promise<common.FieldValue<T["spec"]["returns"]>> {
         return new Promise((resolve, reject) => {
             void this.createTransaction(new segment.InvokeMethodSegment(0, method)).then((t) => t.subscribe((event) => {
-                if(event.type === "cancelled")
-                    reject("cancelled by a TranSyn segment");
-
-                else if(event.type === "inbound") {
+                if(event.type === "inbound") {
                     if(event.segment instanceof segment.ConfRequestSegment) {
                         if(!confirmationCallback) {
-                            reject("no confirmationCallback supplied but a ConfRequest segment was received");
+                            reject(new Error("no confirmationCallback supplied but a ConfRequest segment was received"));
                             return;
                         }
                         // we can be sure it's okay because the decoder checked it

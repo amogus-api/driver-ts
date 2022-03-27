@@ -36,7 +36,7 @@ export abstract class Segment {
                 InvokeMethodSegment,
                 UpdateEntitySegment,
                 ConfResponseSegment,
-                TranSynSegment,
+                undefined,
             ],
             "client": [
                 MethodReturnSegment,
@@ -45,6 +45,9 @@ export abstract class Segment {
                 MethodErrorSegment,
             ],
         }[boundTo][prefix >> 6];
+
+        if(!concreteClass)
+            throw new Error("Invalid segment number");
         return await concreteClass.decode(session, stream, prefix, tran);
     }
 }
@@ -181,22 +184,6 @@ export class ConfResponseSegment extends Segment {
 
         // write fields
         await array.write(stream, this.payload.response);
-    }
-}
-
-export class TranSynSegment extends Segment {
-    readonly boundTo = "server";
-
-    constructor(tran: number) {
-        super(tran);
-    }
-
-    static override async decode(_session: Session, _stream: common.Readable, _prefix: number, tran: number): Promise<TranSynSegment> {
-        return new TranSynSegment(tran);
-    }
-
-    override async encode(stream: common.Writable): Promise<void> {
-        await stream.write(Buffer.from([3 << 6]));
     }
 }
 
