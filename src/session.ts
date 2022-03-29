@@ -1,11 +1,13 @@
-// This file is responsible for handling sessions, transactions and related stateful things
+// Handles sessions, transactions and related stateful things
 
 import * as common from "./common";
+import * as things from "./things";
 import * as segment from "./segment";
+import { FieldValue } from "./repr";
 
-export type ConfCallback<T extends common.Method<any>> =
-    (data: common.ValueUnion<T["spec"]["confirmations"]>) =>
-   Promise<common.ValueUnion<T["spec"]["confirmations"]>["response"]>;
+export type ConfCallback<T extends things.Method<any>> =
+    (data: T["spec"]["confirmations"][number]) =>
+   Promise<T["spec"]["confirmations"][number]["response"]>;
 
 export type IncompleteTransactionEvent =
     { type: "created" } |
@@ -42,7 +44,7 @@ export class Transaction extends common.EventHost<TransactionEvent> {
     }
 }
 
-export class InvocationSessionEvent<M extends common.Method<any>> {
+export class InvocationSessionEvent<M extends things.Method<any>> {
     readonly type = "method_invocation";
     method: M;
 
@@ -59,7 +61,7 @@ export class InvocationSessionEvent<M extends common.Method<any>> {
         this.method.sessionEvent = this;
     }
 
-    async confirm<C extends common.Confirmation<common.ConfSpec>>(conf: C, data: C["request"]) {
+    async confirm<C extends things.Confirmation<things.ConfSpec>>(conf: C, data: C["request"]) {
         await this.session.writeSegment(new segment.ConfRequestSegment(this.event.transaction.id,
             { ...conf, request: data }));
 
@@ -95,13 +97,13 @@ export const TARGET_SPEC_VERSION = 1;
 export type TranSessionEvent = { type: "new_transaction", transaction: Transaction };
 export type SessionEvent = TranSessionEvent | InvocationSessionEvent<any>;
 export abstract class Session extends common.EventHost<SessionEvent> {
-    specSpace: common.SpecSpace;
+    specSpace: things.SpecSpace;
     stream: common.ReadableWritable;
     self: common.PeerType;
     transactions: Transaction[] = [];
     active = false;
 
-    constructor(specSpace: common.SpecSpace, stream: common.ReadableWritable, self: common.PeerType) {
+    constructor(specSpace: things.SpecSpace, stream: common.ReadableWritable, self: common.PeerType) {
         super();
         if(specSpace.specVersion !== TARGET_SPEC_VERSION)
             throw new Error(`Unsupported spec version ${specSpace.specVersion}; this version of 'amogus-driver' only supports v${TARGET_SPEC_VERSION}. Upgrade or downgrade 'susc' or 'amogus-driver'.`);
@@ -194,10 +196,10 @@ export abstract class Session extends common.EventHost<SessionEvent> {
         return transaction;
     }
 
-    invokeMethod<T extends common.Method<any>>(
+    invokeMethod<T extends things.Method<any>>(
         method: T,
         confirmationCallback?: ConfCallback<T>
-    ): Promise<common.FieldValue<T["spec"]["returns"]>> {
+    ): Promise<FieldValue<T["spec"]["returns"]>> {
         return new Promise((resolve, reject) => {
             void this.createTransaction(new segment.InvokeMethodSegment(0, method)).then((t) => t.subscribe((event) => {
                 if(event.type === "inbound") {
@@ -215,7 +217,7 @@ export abstract class Session extends common.EventHost<SessionEvent> {
                             });
                     } else if(event.segment instanceof segment.MethodReturnSegment) {
                         // we can be just as sure here
-                        resolve(event.segment.payload.returnVal as unknown as common.FieldValue<T["spec"]["returns"]>);
+                        resolve(event.segment.payload.returnVal as unknown as FieldValue<T["spec"]["returns"]>);
                     } else if(event.segment instanceof segment.MethodErrorSegment) {
                         reject({ code: event.segment.payload.code, message: event.segment.payload.msg });
                     }

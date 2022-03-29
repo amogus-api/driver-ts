@@ -1,10 +1,21 @@
 // This file is responsible for sending and receiving
-// (representing) data types over streams
+// ([repr]esenting) data types over streams
 
-import { range, rangeCheck, FieldSpec, Entity as EntityObj, DataRepr, FieldValue, Readable, Writable, EntitySpec } from "./common";
+import { range, rangeCheck, Readable, Writable } from "./common";
+import { Entity as EntityObj, EntitySpec, SpecSpace } from "./things";
+
+export abstract class DataRepr<T> {
+    specSpace?: SpecSpace;
+
+    abstract write(stream: Writable, value: T): Promise<void>;
+    abstract read(stream: Readable): Promise<T>;
+    abstract validate(value: T): boolean;
+}
+// The type that a DataRepr encloses
+export type TsType<T> = T extends DataRepr<infer R> ? R : never;
 
 interface IntValidators {
-    val?: range
+    val?: range;
 }
 export class Int extends DataRepr<number> {
     size: number;
@@ -101,6 +112,13 @@ export class Str extends DataRepr<string> {
     }
 }
 
+export interface FieldSpec {
+    required: { [name: string]: DataRepr<any> };
+    optional: { [name: string]: [number, DataRepr<any>] };
+}
+export type FieldValue<Spec extends FieldSpec> =
+          { [K in keyof Spec["required"]]: TsType<Spec["required"][K]> }
+        & { [K in keyof Spec["optional"]]?: TsType<Spec["optional"][K][1]> };
 export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> extends DataRepr<Value> {
     // The line above just makes sure that we only pass fields with valid names and values to the functions
 

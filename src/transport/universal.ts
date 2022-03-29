@@ -1,9 +1,10 @@
 // Platform-agnostic transport layer implementations
 
-import * as common from "../common";
+import { ReadableWritable } from "../common";
+import { SpecSpace } from "../things";
 import { Session } from "../session";
 
-class DummyLink implements common.ReadableWritable {
+class DummyLink implements ReadableWritable {
     other!: DummyLink;
     private readBuf = Buffer.alloc(0);
     private listeners: ((data: Buffer) => any)[] = [];
@@ -47,12 +48,12 @@ class DummyLink implements common.ReadableWritable {
 }
 
 class DummyClient extends Session {
-    constructor(specSpace: common.SpecSpace, link: DummyLink) {
+    constructor(specSpace: SpecSpace, link: DummyLink) {
         super(specSpace, link, "client");
     }
 }
 class DummyServer extends Session {
-    constructor(specSpace: common.SpecSpace, link: DummyLink) {
+    constructor(specSpace: SpecSpace, link: DummyLink) {
         super(specSpace, link, "server");
     }
 }
@@ -64,7 +65,7 @@ export function createDummyLinks() {
     return [a, b];
 }
 
-export function createDummyPair(specSpace: common.SpecSpace) {
+export function createDummyPair(specSpace: SpecSpace) {
     const [a, b] = createDummyLinks();
     return {
         server: new DummyServer(specSpace, a),

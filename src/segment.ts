@@ -1,6 +1,7 @@
 // Handles segment encoding and decoding
 
 import * as common from "./common";
+import * as things from "./things";
 import { Entity as EntityRepr, FieldArray, Int, Str } from "./repr";
 import { Session } from "./session";
 
@@ -54,9 +55,9 @@ export abstract class Segment {
 
 export class InvokeMethodSegment extends Segment {
     readonly boundTo = "server";
-    payload: common.Method<common.MethodSpec>;
+    payload: things.Method<things.MethodSpec>;
 
-    constructor(tran: number, payload: common.Method<common.MethodSpec>) {
+    constructor(tran: number, payload: things.Method<things.MethodSpec>) {
         super(tran);
         this.payload = payload;
     }
@@ -126,7 +127,7 @@ export class InvokeMethodSegment extends Segment {
     }
 }
 
-type DefiniteEntity = Required<common.Entity<common.EntitySpec>>;
+type DefiniteEntity = Required<things.Entity<things.EntitySpec>>;
 export class UpdateEntitySegment extends Segment {
     readonly boundTo = "server";
     payload: DefiniteEntity;
@@ -153,9 +154,9 @@ export class UpdateEntitySegment extends Segment {
 
 export class ConfResponseSegment extends Segment {
     readonly boundTo = "server";
-    payload: common.Confirmation<common.ConfSpec>;
+    payload: things.Confirmation<things.ConfSpec>;
 
-    constructor(tran: number, payload: common.Confirmation<common.ConfSpec>) {
+    constructor(tran: number, payload: things.Confirmation<things.ConfSpec>) {
         super(tran);
         this.payload = payload;
     }
@@ -195,9 +196,9 @@ export class ConfResponseSegment extends Segment {
 
 export class MethodReturnSegment extends Segment {
     readonly boundTo = "client";
-    payload: common.Method<common.MethodSpec>;
+    payload: things.Method<things.MethodSpec>;
 
-    constructor(tran: number, payload: common.Method<common.MethodSpec>) {
+    constructor(tran: number, payload: things.Method<things.MethodSpec>) {
         super(tran);
         this.payload = payload;
     }
@@ -262,9 +263,9 @@ export class EntityUpdateSegment extends Segment { // !== UpdateEntitySegment
 
 export class ConfRequestSegment extends Segment {
     readonly boundTo = "client";
-    payload: common.Confirmation<common.ConfSpec>;
+    payload: things.Confirmation<things.ConfSpec>;
 
-    constructor(tran: number, payload: common.Confirmation<common.ConfSpec>) {
+    constructor(tran: number, payload: things.Confirmation<things.ConfSpec>) {
         super(tran);
         this.payload = payload;
     }

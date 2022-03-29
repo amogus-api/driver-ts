@@ -1,10 +1,11 @@
 // Transport layer implementations for Node.JS
 
-import * as common from "../common";
+import { ReadableWritable } from "../common";
+import { SpecSpace } from "../things";
 import { Session } from "../session";
 import * as tls from "tls";
 
-class TlsStream implements common.ReadableWritable {
+class TlsStream implements ReadableWritable {
     socket: tls.TLSSocket;
     private readBuf = Buffer.alloc(0);
 
@@ -57,7 +58,7 @@ export class TlsClient extends Session {
     private readonly socket;
     readonly stream;
 
-    constructor(specSpace: common.SpecSpace, tlsOptions: tls.ConnectionOptions) {
+    constructor(specSpace: SpecSpace, tlsOptions: tls.ConnectionOptions) {
         const socket = tls.connect(tlsOptions);
         const stream = new TlsStream(socket);
 
@@ -75,7 +76,7 @@ export class TlsClient extends Session {
 export class TlsServer extends Session {
     private readonly socket;
 
-    constructor(specSpace: common.SpecSpace, socket: tls.TLSSocket) {
+    constructor(specSpace: SpecSpace, socket: tls.TLSSocket) {
         super(specSpace, new TlsStream(socket), "server");
         this.socket = socket;
     }
@@ -89,7 +90,7 @@ export class TlsServer extends Session {
 export class TlsListener {
     private readonly server;
 
-    constructor(specSpace: common.SpecSpace, options: tls.TlsOptions & { port: number, host?: string }, cb: (socket: TlsServer) => void) {
+    constructor(specSpace: SpecSpace, options: tls.TlsOptions & { port: number, host?: string }, cb: (socket: TlsServer) => void) {
         this.server = tls.createServer(options, (socket) => {
             const session = new TlsServer(specSpace, socket);
             cb(session);
