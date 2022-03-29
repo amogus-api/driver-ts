@@ -7,7 +7,7 @@ describe("Entity method invocation", () => {
 
     // server transaction listener
     server.subscribe(async (event) => {
-        if(event instanceof amogus.session.InvocationSessionEvent) {
+        if(event instanceof amogus.InvocationSessionEvent) {
             const method = event.method;
     
             if(method instanceof api.Test_StaticEcho)
@@ -38,5 +38,11 @@ describe("Entity method invocation", () => {
     test("get entity", async () => {
         const { entity } = await clientSession.MassiveFields.get({ id: 123 });
         expect(entity.value!.id).toEqual(123);
+    });
+
+
+    test("push entity update", async () => {
+        const { entity } = await clientSession.MassiveFields.get({ id: 123 }) as { entity: api.MassiveFields };
+        entity.$update({ a: 100, i: 200 });
     });
 });

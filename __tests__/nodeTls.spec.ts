@@ -14,7 +14,7 @@ describe("Node TLS", () => {
         }, (session) => {
             session.subscribe(async (event) => {
                 // listen to echo() invocations
-                if(!(event instanceof amogus.session.InvocationSessionEvent))
+                if(!(event instanceof amogus.InvocationSessionEvent))
                     return;
                 const method = event.method;
                 if(!(method instanceof api.Echo))
