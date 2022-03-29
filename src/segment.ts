@@ -35,7 +35,7 @@ export abstract class Segment {
         const concreteClass = {
             "server": [
                 InvokeMethodSegment,
-                UpdateEntitySegment,
+                undefined,
                 ConfResponseSegment,
                 undefined,
             ],
@@ -100,7 +100,7 @@ export class InvokeMethodSegment extends Segment {
 
         // write prefix
         const array = new FieldArray(this.payload.spec.params);
-        const [h, o] = array.chooseMode(this.payload.params);
+        const [o, h] = array.chooseMode(this.payload.params);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (0 << 6) | modeMask;
         await stream.write(Buffer.from([prefix]));
@@ -124,31 +124,6 @@ export class InvokeMethodSegment extends Segment {
 
         // write fields
         await array.write(stream, this.payload.params);
-    }
-}
-
-type DefiniteEntity = Required<things.Entity<things.EntitySpec>>;
-export class UpdateEntitySegment extends Segment {
-    readonly boundTo = "server";
-    payload: DefiniteEntity;
-
-    constructor(tran: number, payload: DefiniteEntity) {
-        super(tran);
-        this.payload = payload;
-    }
-
-    static override async decode(session: Session, stream: common.Readable, _prefix: number, tran: number): Promise<UpdateEntitySegment> {
-        const repr = new EntityRepr();
-        repr.specSpace = session.specSpace;
-        const value = await repr.read(stream);
-        return new UpdateEntitySegment(tran, value);
-    }
-
-    override async encode(stream: common.Writable): Promise<void> {
-        await stream.write(Buffer.from([1 << 6]));
-        const repr = new EntityRepr();
-        repr.specSpace = { entities: { [this.payload.numericId]: this.payload }, specVersion: 1, globalMethods: {}, confirmations: {} };
-        await repr.write(stream, this.payload);
     }
 }
 
@@ -184,7 +159,7 @@ export class ConfResponseSegment extends Segment {
 
         // write prefix
         const array = new FieldArray(this.payload.spec.response);
-        const [h, o] = array.chooseMode(this.payload.response);
+        const [o, h] = array.chooseMode(this.payload.response);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (2 << 6) | modeMask;
         await stream.write(Buffer.from([prefix]));
@@ -227,7 +202,7 @@ export class MethodReturnSegment extends Segment {
 
         // write prefix
         const array = new FieldArray(this.payload.spec.returns);
-        const [h, o] = array.chooseMode(this.payload.returnVal);
+        const [o, h] = array.chooseMode(this.payload.returnVal);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (0 << 6) | modeMask;
         await stream.write(Buffer.from([prefix]));
@@ -237,11 +212,11 @@ export class MethodReturnSegment extends Segment {
     }
 }
 
-export class EntityUpdateSegment extends Segment { // !== UpdateEntitySegment
+export class EntityUpdateSegment extends Segment {
     readonly boundTo = "client";
-    payload: DefiniteEntity;
+    payload: things.ValuedEntity;
 
-    constructor(tran: number, payload: DefiniteEntity) {
+    constructor(tran: number, payload: things.ValuedEntity) {
         super(tran);
         this.payload = payload;
     }
@@ -256,7 +231,12 @@ export class EntityUpdateSegment extends Segment { // !== UpdateEntitySegment
     override async encode(stream: common.Writable): Promise<void> {
         await stream.write(Buffer.from([1 << 6]));
         const repr = new EntityRepr();
-        repr.specSpace = { entities: { [this.payload.numericId]: this.payload }, specVersion: 1, globalMethods: {}, confirmations: {} };
+        repr.specSpace = {
+            entities: { [this.payload.numericId]: this.payload as things.Entity<things.EntitySpec> },
+            specVersion: 1,
+            globalMethods: {},
+            confirmations: {},
+        };
         await repr.write(stream, this.payload);
     }
 }
@@ -290,7 +270,7 @@ export class ConfRequestSegment extends Segment {
 
         // write prefix
         const array = new FieldArray(this.payload.spec.request);
-        const [h, o] = array.chooseMode(this.payload.request);
+        const [o, h] = array.chooseMode(this.payload.request);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (2 << 6) | modeMask | this.payload.numericId;
         await stream.write(Buffer.from([prefix]));

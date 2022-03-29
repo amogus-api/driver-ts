@@ -1,11 +1,13 @@
 // This file is responsible for sending and receiving
 // ([repr]esenting) data types over streams
 
+import { Session } from "./session";
 import { range, rangeCheck, Readable, Writable } from "./common";
-import { Entity as EntityObj, EntitySpec, SpecSpace } from "./things";
+import { ValuedEntity, SpecSpace } from "./things";
 
 export abstract class DataRepr<T> {
     specSpace?: SpecSpace;
+    session?: Session;
 
     abstract write(stream: Writable, value: T): Promise<void>;
     abstract read(stream: Readable): Promise<T>;
@@ -141,12 +143,13 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
     // chooses the optimal encoding mode for a value
     // returns `[at_least_one_optional, high_packing]`
     chooseMode(value: object): [boolean, boolean] {
-        const optional = Object.keys(value).filter(k => k in this.spec.optional);
-        if(optional.length == 0) {
+        const optional = Object.keys(value).filter(k => k in this.spec.optional).length;
+
+        if(optional === 0) {
             this.hasOptional = false;
         } else {
             this.hasOptional = true;
-            const normalOverhead = 1 + optional.length;
+            const normalOverhead = 1 + optional;
             this.highPacking = normalOverhead > this._hpSelLen;
         }
 
@@ -251,17 +254,16 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
     }
 }
 
-type DefiniteEntity = Required<EntityObj<EntitySpec>>;
-export class Entity extends DataRepr<DefiniteEntity> {
-    override async write(stream: Writable, value: DefiniteEntity) {
+export class Entity extends DataRepr<ValuedEntity> {
+    override async write(stream: Writable, value: ValuedEntity) {
         const array = new FieldArray(value.spec.fields);
-        const [h, o] = array.chooseMode(value);
+        const [o, h] = array.chooseMode(value.value);
         const modeMask = (h ? 128 : 0) | (o ? 64 : 0);
         await new Int(1).write(stream, value.numericId | modeMask);
         await array.write(stream, value.value);
     }
 
-    override async read(stream: Readable): Promise<DefiniteEntity> {
+    override async read(stream: Readable): Promise<ValuedEntity> {
         // read id
         let numericId = await new Int(1).read(stream);
         const mode: [boolean, boolean] = [(numericId & 64) > 0, (numericId & 128) > 0];
@@ -280,7 +282,7 @@ export class Entity extends DataRepr<DefiniteEntity> {
         return entity;
     }
 
-    override validate(value: DefiniteEntity) {
+    override validate(value: ValuedEntity) {
         return new FieldArray(value.spec.fields).validate(value.value);
     }
 }

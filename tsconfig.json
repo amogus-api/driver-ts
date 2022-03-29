@@ -12,12 +12,12 @@
         "strictNullChecks": true,
         "alwaysStrict": true,
         "noUnusedLocals": true,
-        "noUnusedParameters": true,
+        "noUnusedParameters": false,
         "skipLibCheck": true,
         "declaration": true,
         "esModuleInterop": true,
         "downlevelIteration": true
     },
     "include": ["src"],
-    "exclude": ["node_modules", "lib", "**/*.test.ts"]
+    "exclude": ["node_modules", "lib", "**/*_output/**"]
 }

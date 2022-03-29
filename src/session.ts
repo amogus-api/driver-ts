@@ -33,9 +33,6 @@ export class Transaction extends common.EventHost<TransactionEvent> {
         if(first instanceof segment.InvokeMethodSegment)
             return (last instanceof segment.MethodReturnSegment) || (last instanceof segment.MethodErrorSegment);
 
-        if(first instanceof segment.UpdateEntitySegment || first instanceof segment.EntityUpdateSegment)
-            return true;
-
         return false;
     }
 
@@ -44,7 +41,7 @@ export class Transaction extends common.EventHost<TransactionEvent> {
     }
 }
 
-export class InvocationSessionEvent<M extends things.Method<any>> {
+export class InvocationEvent<M extends things.Method<any>> {
     readonly type = "method_invocation";
     method: M;
 
@@ -93,9 +90,10 @@ export class InvocationSessionEvent<M extends things.Method<any>> {
     }
 }
 
-export const TARGET_SPEC_VERSION = 1;
 export type TranSessionEvent = { type: "new_transaction", transaction: Transaction };
-export type SessionEvent = TranSessionEvent | InvocationSessionEvent<any>;
+export type SessionEvent = TranSessionEvent | InvocationEvent<any>;
+
+export const TARGET_SPEC_VERSION = 1;
 export abstract class Session extends common.EventHost<SessionEvent> {
     specSpace: things.SpecSpace;
     stream: common.ReadableWritable;
@@ -103,24 +101,28 @@ export abstract class Session extends common.EventHost<SessionEvent> {
     transactions: Transaction[] = [];
     active = false;
 
-    constructor(specSpace: things.SpecSpace, stream: common.ReadableWritable, self: common.PeerType) {
+    constructor(specSpace: (session: Session) => things.SpecSpace, stream: common.ReadableWritable, self: common.PeerType) {
         super();
-        if(specSpace.specVersion !== TARGET_SPEC_VERSION)
-            throw new Error(`Unsupported spec version ${specSpace.specVersion}; this version of 'amogus-driver' only supports v${TARGET_SPEC_VERSION}. Upgrade or downgrade 'susc' or 'amogus-driver'.`);
+        const space = specSpace(this);
 
-        this.subscribe(this.processMethodTran.bind(this));
-        this.specSpace = specSpace;
+        if(space.specVersion !== TARGET_SPEC_VERSION)
+            throw new Error(`Unsupported spec version ${space.specVersion}; this version of 'amogus-driver' only supports v${TARGET_SPEC_VERSION}. Upgrade or downgrade 'susc' or 'amogus-driver'.`);
+
+        this.subscribe((e) => this.processTran(e));
+        this.specSpace = space;
         this.stream = stream;
         this.self = self;
         this.run();
     }
 
-    private async processMethodTran(event: SessionEvent) {
+    private async processTran(event: SessionEvent) {
         if(event.type !== "new_transaction")
             return;
-        if(!(event.transaction.segments[0] instanceof segment.InvokeMethodSegment))
-            return;
-        this.trigger(new InvocationSessionEvent(event, this));
+        const segm = event.transaction.segments[0];
+
+        if(segm instanceof segment.InvokeMethodSegment) {
+            this.trigger(new InvocationEvent(event, this));
+        }
     }
 
     private run() {

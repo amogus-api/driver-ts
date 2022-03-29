@@ -46,4 +46,4 @@ export class EventHost<Event> {
 }
 
 // makes specific properties non-nullable
-export type NotNull<T, K extends keyof T> = Omit<T, K> & NonNullable<Pick<T, K>>;
+export type NotNull<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;

@@ -1,21 +1,22 @@
 // Handles Entities, Methods, Confirmations and their specs
 
-import { Cloneable } from "./common";
+import { Cloneable, NotNull } from "./common";
 import { FieldValue, FieldSpec } from "./repr";
-import { Session, InvocationSessionEvent } from "./session";
-import { EntityUpdateSegment } from "./segment";
+import { Session, InvocationEvent } from "./session";
 
 export interface EntitySpec {
     fields: FieldSpec;
     methods: { [numericId: number]: Method<MethodSpec> };
 }
+export type ValuedEntity = NotNull<Entity<EntitySpec>, "value">;
+export type ConcreteDefiniteEntity<E extends Entity<EntitySpec>> = NotNull<E, "value">;
 export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
     value?: FieldValue<Spec["fields"]>;
 
-    protected static readonly session?: Session;
-    protected readonly dynSession?: Session;
+    protected static session?: Session;
+    protected dynSession?: Session;
 
     constructor(spec: Spec, numericId: number, value?: FieldValue<Spec["fields"]>) {
         super();
@@ -24,6 +25,9 @@ export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
         this.value = value;
     }
 
+    protected update(_params: { entity: ValuedEntity }): Promise<Record<string, never>> {
+        throw new Error("Not implemented");
+    }
     async $update(toUpdate: Partial<FieldValue<Spec["fields"]>>) {
         this.value = { ...this.value, ...toUpdate };
 
@@ -35,7 +39,14 @@ export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
             Object.entries(this.value).filter(([k, _]) => k in this.spec.fields.required));
         entity.value = { ...required, ...toUpdate };
 
-        await this.dynSession?.createTransaction(new EntityUpdateSegment(0, entity as Required<Entity<Spec>>));
+        await this.update({ entity: entity as ValuedEntity });
+    }
+
+    protected static get(_params: { id: number }): Promise<{ entity: ValuedEntity }> {
+        throw new Error("Not implemented");
+    }
+    static async $get(id: number) {
+        return (await this.get({ id }));
     }
 }
 
@@ -53,7 +64,7 @@ export abstract class Method<Spec extends MethodSpec> extends Cloneable {
     returnVal?: FieldValue<Spec["returns"]>;
     entityId?: number;
 
-    sessionEvent?: InvocationSessionEvent<Method<Spec>>;
+    sessionEvent?: InvocationEvent<Method<Spec>>;
 
     constructor(spec: Spec, numericId: number, entityNumericId?: number) {
         super();
@@ -97,3 +108,5 @@ export interface SpecSpace {
     globalMethods: { [id: number]: Method<MethodSpec> };
     confirmations: { [id: number]: Confirmation<ConfSpec> };
 }
+
+export type SpecSpaceGen = (session: Session) => SpecSpace;
