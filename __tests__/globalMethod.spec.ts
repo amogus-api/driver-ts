@@ -9,7 +9,7 @@ describe("Global method invocation", () => {
     // server transaction listener
     server.subscribe(async (event) => {
         // only process echo() invocations
-        if(!(event instanceof amogus.InvocationSessionEvent))
+        if(!(event instanceof amogus.InvocationEvent))
             return;
         const method = event.method;
         if(!(method instanceof api.Echo))

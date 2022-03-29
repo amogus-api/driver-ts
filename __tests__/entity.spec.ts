@@ -1,13 +1,19 @@
 import * as amogus from "../src/index";
+import { ConcreteDefiniteEntity, ValuedEntity } from "../src/things";
 import * as api from "./entity_output/ts/index";
 
 describe("Entity method invocation", () => {
     const { client, server } = amogus.transport.universal.createDummyPair(api.$specSpace);
     const clientSession = api.$bind(client);
+    const serverSession = api.$bind(server);
+
+    let objectStore: { [id: number]: ValuedEntity } = {
+        123: new serverSession.MassiveFields({ id: 123, a: 300 }) as ValuedEntity,
+    };
 
     // server transaction listener
     server.subscribe(async (event) => {
-        if(event instanceof amogus.InvocationSessionEvent) {
+        if(event instanceof amogus.InvocationEvent) {
             const method = event.method;
     
             if(method instanceof api.Test_StaticEcho)
@@ -16,8 +22,26 @@ describe("Entity method invocation", () => {
             else if(method instanceof api.Test_DynamicEcho)
                 await method.return({ str: `${method.params!.str} return (eid ${method.entityId})` });
 
-            else if(method instanceof api.MassiveFields_Get)
-                await method.return({ entity: new api.Test({ id: method.params!.id }) as Required<api.Test> });
+            else if(method instanceof api.MassiveFields_Get) {
+                const id = method.params!.id;
+                if(!(id in objectStore)) {
+                    await event.error(api.ErrorCode.invalid_id, `no such entity ${id}`);
+                    return;
+                }
+                const entity = objectStore[id] as ConcreteDefiniteEntity<api.MassiveFields>;
+                await method.return({ entity });
+            }
+
+            else if(method instanceof api.MassiveFields_Update) {
+                const entity = method.params!.entity;
+                if(!(entity instanceof api.MassiveFields))
+                    return;
+                if(!(entity.value!.id in objectStore))
+                    return;
+    
+                objectStore[entity.value!.id].value = { ...objectStore[entity.value!.id].value, ...entity.value };
+                method.return({});
+            }
         }
     });
 
@@ -36,13 +60,15 @@ describe("Entity method invocation", () => {
 
 
     test("get entity", async () => {
-        const { entity } = await clientSession.MassiveFields.get({ id: 123 });
+        const { entity } = await clientSession.MassiveFields.$get(123);
         expect(entity.value!.id).toEqual(123);
     });
 
 
     test("push entity update", async () => {
-        const { entity } = await clientSession.MassiveFields.get({ id: 123 }) as { entity: api.MassiveFields };
-        entity.$update({ a: 100, i: 200 });
+        let { entity } = await clientSession.MassiveFields.$get(123) as { entity: api.MassiveFields };
+        await entity.$update({ a: 400, b: 300});
+        entity = (await clientSession.MassiveFields.$get(123)).entity as api.MassiveFields;
+        expect(entity.value).toEqual({ id: 123, a: 400, b: 300 });
     });
 });
