@@ -21,7 +21,7 @@ describe("Node TLS", () => {
                     return;
 
                 // return a response
-                await event.return({ str: `${method.params!.str} return` });
+                await method.return({ str: `${method.params!.str} return` });
             });
         });
 

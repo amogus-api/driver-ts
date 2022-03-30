@@ -17,14 +17,14 @@ describe("Global method invocation", () => {
 
         if(serverAskCaptcha) {
             // ask captcha and compare solution
-            const { code } = await event.confirm(new api.Captcha(), { url: "https://example.com/amogus.png" });
+            const { code } = await method.confirm(new api.Captcha(), { url: "https://example.com/amogus.png" });
             if(code === "amogus")
-                await event.return({ str: `${method.params!.str} return` });
+                await method.return({ str: `${method.params!.str} return` });
             else
-                await event.error(api.ErrorCode.validation_failed, "Invalid captcha");
+                await method.error(api.ErrorCode.validation_failed, "Invalid captcha");
         } else {
             // send a response
-            await event.return({ str: `${method.params!.str} return` });
+            await method.return({ str: `${method.params!.str} return` });
         }
     });
 

@@ -79,12 +79,12 @@ export class InvocationEvent<M extends things.Method<any>> {
         return response;
     }
 
-    async error(code: number, message: string): Promise<any> {
+    async error(code: number, message: string): Promise<void> {
         await this.session.writeSegment(new segment.MethodErrorSegment(this.event.transaction.id,
             { code, msg: message }));
     }
 
-    async return(ret: M["returnVal"]): Promise<any> {
+    async return(ret: M["returnVal"]): Promise<void> {
         this.method.returnVal = ret;
         await this.session.writeSegment(new segment.MethodReturnSegment(this.event.transaction.id, this.method));
     }

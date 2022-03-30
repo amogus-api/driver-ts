@@ -17,19 +17,19 @@ describe("Entity method invocation", () => {
             const method = event.method;
     
             if(method instanceof api.Test_StaticEcho)
-                await event.return({ str: `${method.params!.str} return` });
+                await method.return({ str: `${method.params!.str} return` });
             
             else if(method instanceof api.Test_DynamicEcho)
-                await event.return({ str: `${method.params!.str} return (eid ${method.entityId})` });
+                await method.return({ str: `${method.params!.str} return (eid ${method.entityId})` });
 
             else if(method instanceof api.MassiveFields_Get) {
                 const id = method.params!.id;
                 if(!(id in objectStore)) {
-                    await event.error(api.ErrorCode.invalid_id, `no such entity ${id}`);
+                    await method.error(api.ErrorCode.invalid_id, `no such entity ${id}`);
                     return;
                 }
                 const entity = objectStore[id] as ConcreteValuedEntity<api.MassiveFields>;
-                await event.return({ entity });
+                await method.return({ entity });
             }
 
             else if(method instanceof api.MassiveFields_Update) {
@@ -40,7 +40,7 @@ describe("Entity method invocation", () => {
                     return;
     
                 objectStore[entity.value!.id].value = { ...objectStore[entity.value!.id].value, ...entity.value };
-                await event.return({});
+                await method.return({});
             }
         }
     });
