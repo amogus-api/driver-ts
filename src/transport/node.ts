@@ -56,7 +56,6 @@ class TlsStream implements ReadableWritable {
 
 export class TlsClient extends Session {
     private readonly socket;
-    readonly stream;
 
     constructor(specSpace: SpecSpaceGen, tlsOptions: tls.ConnectionOptions) {
         const socket = tls.connect(tlsOptions);

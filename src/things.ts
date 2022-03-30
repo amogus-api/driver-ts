@@ -69,16 +69,6 @@ export abstract class Method<Spec extends MethodSpec> extends Cloneable {
         this.numericId = numericId;
         this.entityNumericId = entityNumericId;
     }
-
-    async return(ret: FieldValue<Spec["returns"]>) {
-        return this.sessionEvent?.return(ret);
-    }
-    async error(code: number, message: string) {
-        return this.sessionEvent?.error(code, message);
-    }
-    async confirm<C extends Spec["confirmations"][number]>(conf: C, data: C["request"]) {
-        return this.sessionEvent?.confirm(conf, data);
-    }
 }
 
 export interface ConfSpec {

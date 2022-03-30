@@ -91,14 +91,16 @@ export class InvocationEvent<M extends things.Method<any>> {
 }
 
 export type TranSessionEvent = { type: "new_transaction", transaction: Transaction };
-export type SessionEvent = TranSessionEvent | InvocationEvent<any>;
+export type EntityEvent = { type: "entity_update", entity: things.ValuedEntity };
+export type SessionEvent = TranSessionEvent | InvocationEvent<any> | EntityEvent;
 
 export abstract class Session extends common.EventHost<SessionEvent> {
     specSpace: things.SpecSpace;
-    stream: common.ReadableWritable;
-    self: common.PeerType;
     transactions: Transaction[] = [];
-    active = false;
+
+    protected stream: common.ReadableWritable;
+    private self: common.PeerType;
+    private active = false;
 
     constructor(specSpace: (session: Session) => things.SpecSpace, stream: common.ReadableWritable, self: common.PeerType) {
         super();
@@ -118,6 +120,8 @@ export abstract class Session extends common.EventHost<SessionEvent> {
 
         if(segm instanceof segment.InvokeMethodSegment) {
             this.trigger(new InvocationEvent(event, this));
+        } else if(segm instanceof segment.EntityUpdateSegment) {
+            this.trigger({ type: "entity_update", entity: segm.payload });
         }
     }
 
@@ -194,7 +198,7 @@ export abstract class Session extends common.EventHost<SessionEvent> {
         return transaction;
     }
 
-    invokeMethod<T extends things.Method<any>>(
+    async invokeMethod<T extends things.Method<any>>(
         method: T,
         confirmationCallback?: ConfCallback<T>
     ): Promise<FieldValue<T["spec"]["returns"]>> {
@@ -222,6 +226,13 @@ export abstract class Session extends common.EventHost<SessionEvent> {
                 }
             }));
         });
+    }
+
+    async pushEntity(entity: things.ValuedEntity): Promise<void> {
+        if(this.self !== "server")
+            throw new Error("pushEntity can only be called on the server");
+
+        await this.createTransaction(new segment.EntityUpdateSegment(0, entity));
     }
 }
 
