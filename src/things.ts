@@ -103,7 +103,7 @@ export abstract class Confirmation<Spec extends ConfSpec> extends Cloneable {
 }
 
 export interface SpecSpace {
-    specVersion: number,
+    specVersion: "2",
     entities: { [id: number]: Entity<EntitySpec> };
     globalMethods: { [id: number]: Method<MethodSpec> };
     confirmations: { [id: number]: Confirmation<ConfSpec> };

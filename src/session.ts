@@ -93,7 +93,6 @@ export class InvocationEvent<M extends things.Method<any>> {
 export type TranSessionEvent = { type: "new_transaction", transaction: Transaction };
 export type SessionEvent = TranSessionEvent | InvocationEvent<any>;
 
-export const TARGET_SPEC_VERSION = 1;
 export abstract class Session extends common.EventHost<SessionEvent> {
     specSpace: things.SpecSpace;
     stream: common.ReadableWritable;
@@ -105,14 +104,13 @@ export abstract class Session extends common.EventHost<SessionEvent> {
         super();
         const space = specSpace(this);
 
-        if(space.specVersion !== TARGET_SPEC_VERSION)
-            throw new Error(`Unsupported spec version ${space.specVersion}; this version of 'amogus-driver' only supports v${TARGET_SPEC_VERSION}. Upgrade or downgrade 'susc' or 'amogus-driver'.`);
-
         this.subscribe((e) => this.processTran(e));
         this.specSpace = space;
         this.stream = stream;
         this.self = self;
         this.run();
+
+        const a: 
     }
 
     private async processTran(event: SessionEvent) {
