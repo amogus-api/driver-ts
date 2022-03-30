@@ -70,19 +70,19 @@ export abstract class Method<Spec extends MethodSpec> extends Cloneable {
         this.entityNumericId = entityNumericId;
     }
 
-    async return(ret: FieldValue<Spec["returns"]>) {
+    async return(ret: FieldValue<Spec["returns"]>): Promise<void> {
         if(!this.sessionEvent)
             throw new Error("No event to respond to");
         return this.sessionEvent.return(ret);
     }
 
-    async error(code: number, message: string) {
+    async error(code: number, message: string): Promise<void> {
         if(!this.sessionEvent)
             throw new Error("No event to respond to");
         return await this.sessionEvent.error(code, message);
     }
 
-    async confirm<C extends Spec["confirmations"][number]>(conf: C, data: C["request"]) {
+    async confirm<C extends Spec["confirmations"][number]>(conf: C, data: C["request"]): Promise<NonNullable<C["response"]>> {
         if(!this.sessionEvent)
             throw new Error("No event to respond to");
         return await this.sessionEvent.confirm(conf, data);
