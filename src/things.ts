@@ -9,7 +9,7 @@ export interface EntitySpec {
     methods: { [numericId: number]: Method<MethodSpec> };
 }
 export type ValuedEntity = NotNull<Entity<EntitySpec>, "value">;
-export type ConcreteDefiniteEntity<E extends Entity<EntitySpec>> = NotNull<E, "value">;
+export type ConcreteValuedEntity<E extends Entity<EntitySpec>> = NotNull<E, "value">;
 export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
@@ -28,7 +28,7 @@ export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
     protected update(_params: { entity: ValuedEntity }): Promise<Record<string, never>> {
         throw new Error("Not implemented");
     }
-    async $update(toUpdate: Partial<FieldValue<Spec["fields"]>>) {
+    async $update(toUpdate: Partial<FieldValue<Spec["fields"]>>): Promise<void> {
         this.value = { ...this.value, ...toUpdate };
 
         if(!this.value)
@@ -42,11 +42,8 @@ export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
         await this.update({ entity: entity as ValuedEntity });
     }
 
-    protected static get(_params: { id: number }): Promise<{ entity: ValuedEntity }> {
+    static async $get(_id: number): Promise<ValuedEntity> {
         throw new Error("Not implemented");
-    }
-    static async $get(id: number) {
-        return (await this.get({ id }));
     }
 }
 
@@ -104,6 +101,7 @@ export abstract class Confirmation<Spec extends ConfSpec> extends Cloneable {
 
 export interface SpecSpace {
     specVersion: "2",
+    project: string,
     entities: { [id: number]: Entity<EntitySpec> };
     globalMethods: { [id: number]: Method<MethodSpec> };
     confirmations: { [id: number]: Confirmation<ConfSpec> };

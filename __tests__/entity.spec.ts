@@ -1,5 +1,5 @@
 import * as amogus from "../src/index";
-import { ConcreteDefiniteEntity, ValuedEntity } from "../src/things";
+import { ConcreteValuedEntity, ValuedEntity } from "../src/things";
 import * as api from "./entity_output/ts/index";
 
 describe("Entity method invocation", () => {
@@ -28,7 +28,7 @@ describe("Entity method invocation", () => {
                     await event.error(api.ErrorCode.invalid_id, `no such entity ${id}`);
                     return;
                 }
-                const entity = objectStore[id] as ConcreteDefiniteEntity<api.MassiveFields>;
+                const entity = objectStore[id] as ConcreteValuedEntity<api.MassiveFields>;
                 await method.return({ entity });
             }
 
@@ -40,7 +40,7 @@ describe("Entity method invocation", () => {
                     return;
     
                 objectStore[entity.value!.id].value = { ...objectStore[entity.value!.id].value, ...entity.value };
-                method.return({});
+                await method.return({});
             }
         }
     });
@@ -60,15 +60,24 @@ describe("Entity method invocation", () => {
 
 
     test("get entity", async () => {
-        const { entity } = await clientSession.MassiveFields.$get(123);
+        const entity = await clientSession.MassiveFields.$get(123);
         expect(entity.value!.id).toEqual(123);
     });
 
 
     test("push entity update", async () => {
-        let { entity } = await clientSession.MassiveFields.$get(123) as { entity: api.MassiveFields };
-        await entity.$update({ a: 400, b: 300});
-        entity = (await clientSession.MassiveFields.$get(123)).entity as api.MassiveFields;
+        let entity = await clientSession.MassiveFields.$get(123);
+        await entity.$update({ a: 400, b: 300 });
+        entity = (await clientSession.MassiveFields.$get(123));
         expect(entity.value).toEqual({ id: 123, a: 400, b: 300 });
+    });
+
+
+    test("get field via top-level getter", async () => {
+        let entity = await clientSession.MassiveFields.$get(123);
+        await entity.$update({ a: 300, j: 500 });
+        expect(entity.id).toEqual(123);
+        expect(entity.a).toEqual(300);
+        expect(entity.j).toEqual(500);
     });
 });

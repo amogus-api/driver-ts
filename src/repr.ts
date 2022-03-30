@@ -255,6 +255,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
 }
 
 export class Entity extends DataRepr<ValuedEntity> {
+
     override async write(stream: Writable, value: ValuedEntity) {
         const array = new FieldArray(value.spec.fields);
         const [o, h] = array.chooseMode(value.value);
@@ -278,7 +279,7 @@ export class Entity extends DataRepr<ValuedEntity> {
         array.specSpace = this.specSpace;
         const value = await array.read(stream);
         entity.value = value;
-        // @ts-expect-error TS is not smart enough to figure out that `value` is not undefined
+        // @ts-expect-error TS is not smart enough to figure out that `value` is undefined
         return entity;
     }
 
