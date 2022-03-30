@@ -233,7 +233,7 @@ export class EntityUpdateSegment extends Segment {
         const repr = new EntityRepr();
         repr.specSpace = {
             entities: { [this.payload.numericId]: this.payload as things.Entity<things.EntitySpec> },
-            specVersion: 1,
+            specVersion: "2",
             globalMethods: {},
             confirmations: {},
         };

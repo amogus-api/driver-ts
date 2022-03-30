@@ -109,8 +109,6 @@ export abstract class Session extends common.EventHost<SessionEvent> {
         this.stream = stream;
         this.self = self;
         this.run();
-
-        const a: 
     }
 
     private async processTran(event: SessionEvent) {
