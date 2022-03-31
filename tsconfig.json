@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "outDir": "lib",
         "target": "es2015",
         "module": "esnext",
         "sourceMap": true,
@@ -15,8 +14,9 @@
         "skipLibCheck": true,
         "declaration": true,
         "esModuleInterop": true,
-        "downlevelIteration": true
+        "downlevelIteration": true,
+        "disableSizeLimit": true
     },
-    "include": ["src"],
-    "exclude": ["node_modules", "lib", "**/*_output/**"]
+    "include": ["src", "__test__"],
+    "exclude": ["node_modules", "lib"]
 }

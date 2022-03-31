@@ -6,7 +6,7 @@ export default [
       file: './lib/index.esm.js',
       format: 'esm'
     },
-    plugins: [typescript()],
+    plugins: [typescript({ tsconfig: './buildconfig.json' })],
   },
   {
     input: './src/index.ts',
@@ -14,6 +14,6 @@ export default [
       file: './lib/index.js',
       format: 'cjs'
     },
-    plugins: [typescript()],
+    plugins: [typescript({ tsconfig: './buildconfig.json' })],
   },
 ]

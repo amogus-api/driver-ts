@@ -4,6 +4,9 @@ import { NotNull } from "./common";
 import { InvocationEvent, Session as SessionType } from "./session";
 import { SpecSpace, AllMethods } from "./things";
 
+type MethodByName<M extends AllMethods<SpecSpace>, N extends M["spec"]["name"]> =
+    Extract<M, { spec: { name: N } }>;
+
 export class Server<State, Session extends SessionType<SpecSpace>> {
     private session: Session;
     private state: State;
@@ -13,14 +16,10 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
         this.state = initialState;
     }
 
-    onInvocation<M extends AllMethods<Session["specSpace"]>>(
-        ...args: M extends any ? [
-            M["spec"]["name"],
-            (method: NotNull<M, "params">, state: State) => Promise<State|void|undefined>
-        ] : never
+    onInvocation<M extends AllMethods<Session["specSpace"]>, N extends M["spec"]["name"]>(
+        name: N,
+        callback: (method: NotNull<MethodByName<M, N>, "params">, state: State) => Promise<State|void|undefined>
     ) {
-        const [name, callback] = args;
-
         this.session.subscribe(async (ev) => {
             if(!(ev instanceof InvocationEvent))
                 return;
