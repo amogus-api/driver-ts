@@ -1,9 +1,8 @@
 {
   "name": "amogus-driver",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "AMOGUS wire protocol implementation for TypeScript",
-  "main": "lib/index.js",
-  "module": "lib/index.esm.js",
+  "main": "src/index.ts",
   "scripts": {
     "build": "rollup -c",
     "test:sus": "susc -l ts __tests__/*.sus && sed -i 's/amogus-driver/..\\/..\\/..\\/src\\/index/g' __tests__/*_output/ts/index.ts",
@@ -12,7 +11,7 @@
     "pub": "pnpm build && pnpm publish"
   },
   "files": [
-    "lib",
+    "src",
     "package.json"
   ],
   "repository": {

@@ -1,4 +1,4 @@
-import * as amogus from "../src/index";
+import * as amogus from "../lib/index.esm";
 import * as api from "./globalMethod_output/ts/index";
 
 describe("Nice server API", () => {
