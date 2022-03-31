@@ -1,9 +1,8 @@
 {
     "compilerOptions": {
         "outDir": "lib",
-        "target": "es5",
+        "target": "es2015",
         "module": "esnext",
-        "lib": ["es2015"],
         "sourceMap": true,
         "strict": true,
         "strictFunctionTypes": true,

@@ -1,6 +1,6 @@
 {
   "name": "amogus-driver",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "AMOGUS wire protocol implementation for TypeScript",
   "main": "lib/index.js",
   "module": "lib/index.esm.js",
@@ -51,5 +51,8 @@
   },
   "dependencies": {
     "tslib": "^2.3.1"
+  },
+  "peerDependencies": {
+    "typescript": "^4.6"
   }
 }

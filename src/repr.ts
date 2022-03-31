@@ -7,7 +7,7 @@ import { ValuedEntity, SpecSpace } from "./things";
 
 export abstract class DataRepr<T> {
     specSpace?: SpecSpace;
-    session?: Session;
+    session?: Session<SpecSpace>;
 
     abstract write(stream: Writable, value: T): Promise<void>;
     abstract read(stream: Readable): Promise<T>;
@@ -116,7 +116,7 @@ export class Str extends DataRepr<string> {
 
 export interface FieldSpec {
     required: { [name: string]: DataRepr<any> };
-    optional: { [name: string]: [number, DataRepr<any>] };
+    optional: { [name: string]: readonly [number, DataRepr<any>] };
 }
 export type FieldValue<Spec extends FieldSpec> =
           { [K in keyof Spec["required"]]: TsType<Spec["required"][K]> }

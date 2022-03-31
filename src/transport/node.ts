@@ -1,7 +1,7 @@
 // Transport layer implementations for Node.JS
 
 import { ReadableWritable } from "../common";
-import { SpecSpaceGen } from "../things";
+import { SpecSpace, SpecSpaceGen } from "../things";
 import { Session } from "../session";
 import * as tls from "tls";
 
@@ -54,10 +54,10 @@ class TlsStream implements ReadableWritable {
     }
 }
 
-export class TlsClient extends Session {
+export class TlsClient<Spec extends SpecSpace> extends Session<Spec> {
     private readonly socket;
 
-    constructor(specSpace: SpecSpaceGen, tlsOptions: tls.ConnectionOptions) {
+    constructor(specSpace: SpecSpaceGen<Spec>, tlsOptions: tls.ConnectionOptions) {
         const socket = tls.connect(tlsOptions);
         const stream = new TlsStream(socket);
 
@@ -72,10 +72,10 @@ export class TlsClient extends Session {
     }
 }
 
-export class TlsServer extends Session {
+export class TlsServer<Spec extends SpecSpace> extends Session<Spec> {
     private readonly socket;
 
-    constructor(specSpace: SpecSpaceGen, socket: tls.TLSSocket) {
+    constructor(specSpace: SpecSpaceGen<Spec>, socket: tls.TLSSocket) {
         super(specSpace, new TlsStream(socket), "server");
         this.socket = socket;
     }
@@ -86,10 +86,10 @@ export class TlsServer extends Session {
     }
 }
 
-export class TlsListener {
+export class TlsListener<Spec extends SpecSpace> {
     private readonly server;
 
-    constructor(specSpace: SpecSpaceGen, options: tls.TlsOptions & { port: number, host?: string }, cb: (socket: TlsServer) => void) {
+    constructor(specSpace: SpecSpaceGen<Spec>, options: tls.TlsOptions & { port: number, host?: string }, cb: (socket: TlsServer<Spec>) => void) {
         this.server = tls.createServer(options, (socket) => {
             const session = new TlsServer(specSpace, socket);
             cb(session);

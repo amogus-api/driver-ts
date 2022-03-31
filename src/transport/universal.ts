@@ -1,7 +1,7 @@
 // Platform-agnostic transport layer implementations
 
 import { ReadableWritable } from "../common";
-import { SpecSpaceGen } from "../things";
+import { SpecSpace, SpecSpaceGen } from "../things";
 import { Session } from "../session";
 
 class DummyLink implements ReadableWritable {
@@ -47,13 +47,13 @@ class DummyLink implements ReadableWritable {
     }
 }
 
-class DummyClient extends Session {
-    constructor(specSpace: SpecSpaceGen, link: DummyLink) {
+class DummyClient<Spec extends SpecSpace> extends Session<Spec> {
+    constructor(specSpace: SpecSpaceGen<Spec>, link: DummyLink) {
         super(specSpace, link, "client");
     }
 }
-class DummyServer extends Session {
-    constructor(specSpace: SpecSpaceGen, link: DummyLink) {
+class DummyServer<Spec extends SpecSpace> extends Session<Spec> {
+    constructor(specSpace: SpecSpaceGen<Spec>, link: DummyLink) {
         super(specSpace, link, "server");
     }
 }
@@ -65,7 +65,7 @@ export function createDummyLinks() {
     return [a, b];
 }
 
-export function createDummyPair(specSpace: SpecSpaceGen) {
+export function createDummyPair<Spec extends SpecSpace>(specSpace: SpecSpaceGen<Spec>) {
     const [a, b] = createDummyLinks();
     return {
         server: new DummyServer(specSpace, a),

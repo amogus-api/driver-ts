@@ -10,13 +10,14 @@ export interface EntitySpec {
 }
 export type ValuedEntity = NotNull<Entity<EntitySpec>, "value">;
 export type ConcreteValuedEntity<E extends Entity<EntitySpec>> = NotNull<E, "value">;
+export type GetEntitySpec<E> = E extends Entity<infer S> ? S : never;
 export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
     value?: FieldValue<Spec["fields"]>;
 
-    protected static session?: Session;
-    protected dynSession?: Session;
+    protected static session?: Session<SpecSpace>;
+    protected dynSession?: Session<SpecSpace>;
 
     constructor(spec: Spec, numericId: number, value?: FieldValue<Spec["fields"]>) {
         super();
@@ -48,10 +49,12 @@ export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
 }
 
 export interface MethodSpec {
+    name: string;
     params: FieldSpec;
     returns: FieldSpec;
     confirmations: Confirmation<any>[];
 }
+export type GetMethodSpec<M> = M extends Method<infer S> ? S : never;
 export abstract class Method<Spec extends MethodSpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
@@ -115,4 +118,10 @@ export interface SpecSpace {
     confirmations: { [id: number]: Confirmation<ConfSpec> };
 }
 
-export type SpecSpaceGen = (session: Session) => SpecSpace;
+type ObjValues<O> = O extends any ? O[keyof O] : never;
+export type AllMethods<Spec extends SpecSpace> =
+    ObjValues<Spec["globalMethods"]> |
+    ObjValues<GetEntitySpec<ObjValues<Spec["entities"]>>["methods"]>;
+
+export type SpecSpaceGen<Spec extends SpecSpace> = (session: Session<Spec>) => Spec;
+export type SpaceOfGen<Gen> = Gen extends SpecSpaceGen<infer S> ? S : never;

@@ -70,10 +70,10 @@ describe("Entity method invocation", () => {
 
     test("get field via top-level getter", async () => {
         let entity = await clientSession.MassiveFields.$get(123);
-        await entity.$update({ a: 300, j: 500 });
+        await entity.$update({ a: 300, f: 500 });
         expect(entity.id).toEqual(123);
         expect(entity.a).toEqual(300);
-        expect(entity.j).toEqual(500);
+        expect(entity.f).toEqual(500);
     });
 
     test("entity update from server", () => {
@@ -85,11 +85,11 @@ describe("Entity method invocation", () => {
                 const entity = ev.entity;
                 expect(entity).toBeInstanceOf(api.MassiveFields);
                 expect(entity.value!.id).toEqual(123);
-                expect(entity.value!.k).toEqual(420);
+                expect(entity.value!.g).toEqual(420);
                 resolve();
             });
             
-            serverSession.$session.pushEntity(new serverSession.MassiveFields({ id: 123, k: 420 }) as ValuedEntity);
+            serverSession.$session.pushEntity(new serverSession.MassiveFields({ id: 123, g: 420 }) as ValuedEntity);
         });
     });
 });

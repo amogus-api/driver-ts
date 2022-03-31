@@ -16,11 +16,11 @@ export type IncompleteTransactionEvent =
     { type: "finished" };
 export type TransactionEvent = IncompleteTransactionEvent & { tran: Transaction };
 export class Transaction extends common.EventHost<TransactionEvent> {
-    session: Session;
+    session: Session<things.SpecSpace>;
     id: number;
     segments: segment.Segment[] = [];
 
-    constructor(session: Session, id: number) {
+    constructor(session: Session<things.SpecSpace>, id: number) {
         super();
         this.session = session;
         this.id = id;
@@ -46,9 +46,9 @@ export class InvocationEvent<M extends things.Method<any>> {
     method: M;
 
     private event: TranSessionEvent;
-    private session: Session;
+    private session: Session<things.SpecSpace>;
 
-    constructor(event: TranSessionEvent, session: Session) {
+    constructor(event: TranSessionEvent, session: Session<things.SpecSpace>) {
         const methInvoke = event.transaction.segments[0] as segment.InvokeMethodSegment;
 
         this.event = event;
@@ -94,15 +94,15 @@ export type TranSessionEvent = { type: "new_transaction", transaction: Transacti
 export type EntityEvent = { type: "entity_update", entity: things.ValuedEntity };
 export type SessionEvent = TranSessionEvent | InvocationEvent<any> | EntityEvent;
 
-export abstract class Session extends common.EventHost<SessionEvent> {
-    specSpace: things.SpecSpace;
+export abstract class Session<Spec extends things.SpecSpace> extends common.EventHost<SessionEvent> {
+    specSpace: Spec;
     transactions: Transaction[] = [];
 
     protected stream: common.ReadableWritable;
     private self: common.PeerType;
     private active = false;
 
-    constructor(specSpace: (session: Session) => things.SpecSpace, stream: common.ReadableWritable, self: common.PeerType) {
+    constructor(specSpace: (session: Session<Spec>) => Spec, stream: common.ReadableWritable, self: common.PeerType) {
         super();
         const space = specSpace(this);
 
@@ -237,5 +237,5 @@ export abstract class Session extends common.EventHost<SessionEvent> {
 }
 
 export interface BoundSession {
-    session: Session;
+    session: Session<things.SpecSpace>;
 }
