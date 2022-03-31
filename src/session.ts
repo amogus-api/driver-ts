@@ -4,6 +4,7 @@ import * as common from "./common";
 import * as things from "./things";
 import * as segment from "./segment";
 import { FieldValue } from "./repr";
+import { NotNull } from "./common";
 
 export type ConfCallback<T extends things.Method<any>> =
     (data: T["spec"]["confirmations"][number]) =>
@@ -41,7 +42,7 @@ export class Transaction extends common.EventHost<TransactionEvent> {
     }
 }
 
-export class InvocationEvent<M extends things.Method<any>> {
+export class InvocationEvent<M extends NotNull<things.Method<things.MethodSpec>, "params">> {
     readonly type = "method_invocation";
     method: M;
 

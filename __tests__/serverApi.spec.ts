@@ -7,7 +7,7 @@ describe("Nice server API", () => {
     const serverSession = new amogus.Server(server, { suffix: "!" });
 
     serverSession.onInvocation("echo", async (method, state) => {
-        const params = method.params!;
+        const params = method.params;
         await method.return({ str: params.str + state.suffix });
         return { suffix: state.suffix + "!" };
     });

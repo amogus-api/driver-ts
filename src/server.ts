@@ -1,5 +1,6 @@
 // The nice server-side API
 
+import { NotNull } from "./common";
 import { InvocationEvent, Session as SessionType } from "./session";
 import { SpecSpace, AllMethods } from "./things";
 
@@ -15,7 +16,7 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
     onInvocation<M extends AllMethods<Session["specSpace"]>>(
         ...args: M extends any ? [
             M["spec"]["name"],
-            (method: M, state: State) => Promise<State|undefined>
+            (method: NotNull<M, "params">, state: State) => Promise<State|void|undefined>
         ] : never
     ) {
         const [name, callback] = args;
@@ -27,6 +28,7 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
             if(method.spec.name !== name)
                 return;
 
+            // @ts-expect-error params is guaranteed to be not null
             const newState = await callback(method, this.state);
             if(newState !== undefined)
                 this.state = newState;

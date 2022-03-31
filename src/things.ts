@@ -8,16 +8,17 @@ export interface EntitySpec {
     fields: FieldSpec;
     methods: { [numericId: number]: Method<MethodSpec> };
 }
-export type ValuedEntity = NotNull<Entity<EntitySpec>, "value">;
-export type ConcreteValuedEntity<E extends Entity<EntitySpec>> = NotNull<E, "value">;
+export type ValuedEntity<E extends Entity<EntitySpec> = Entity<EntitySpec>> =
+    Omit<E, "value"> &
+    Required<Pick<E, "value">>;
 export type GetEntitySpec<E> = E extends Entity<infer S> ? S : never;
 export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
     value?: FieldValue<Spec["fields"]>;
 
-    protected static session?: Session<SpecSpace>;
-    protected dynSession?: Session<SpecSpace>;
+    protected static readonly session?: Session<SpecSpace>;
+    readonly dynSession?: Session<SpecSpace>;
 
     constructor(spec: Spec, numericId: number, value?: FieldValue<Spec["fields"]>) {
         super();
@@ -26,7 +27,7 @@ export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
         this.value = value;
     }
 
-    protected update(_params: { entity: ValuedEntity }): Promise<Record<string, never>> {
+    update(_params: { entity: ValuedEntity }): Promise<Record<string, never>> {
         throw new Error("Not implemented");
     }
     async $update(toUpdate: Partial<FieldValue<Spec["fields"]>>): Promise<void> {
@@ -64,7 +65,7 @@ export abstract class Method<Spec extends MethodSpec> extends Cloneable {
     returnVal?: FieldValue<Spec["returns"]>;
     entityId?: number;
 
-    sessionEvent?: InvocationEvent<Method<Spec>>;
+    sessionEvent?: InvocationEvent<NotNull<Method<Spec>, "params">>;
 
     constructor(spec: Spec, numericId: number, entityNumericId?: number) {
         super();

@@ -255,7 +255,6 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
 }
 
 export class Entity extends DataRepr<ValuedEntity> {
-
     override async write(stream: Writable, value: ValuedEntity) {
         const array = new FieldArray(value.spec.fields);
         const [o, h] = array.chooseMode(value.value);
@@ -273,13 +272,13 @@ export class Entity extends DataRepr<ValuedEntity> {
         if(!this.specSpace?.entities)
             throw new Error("No entity definitions provided");
 
-        const entity = this.specSpace.entities[numericId].clone();
+        const entity = this.specSpace.entities[numericId].clone() as ValuedEntity;
         const array = new FieldArray(entity.spec.fields);
         array.setMode(mode);
         array.specSpace = this.specSpace;
         const value = await array.read(stream);
         entity.value = value;
-        // @ts-expect-error TS is not smart enough to figure out that `value` is undefined
+
         return entity;
     }
 
