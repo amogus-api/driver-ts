@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/github/license/amogus-api/driver-ts)
 ![Version](https://img.shields.io/npm/v/amogus-driver)
-![Codecov](https://img.shields.io/codecov/c/github/amogus-api/driver-ts)
+![Coverage](https://coveralls.io/repos/github/amogus-api/driver-ts/badge.svg?branch=master)
 ![Downloads](https://img.shields.io/npm/dm/amogus-driver)
 ![PRs and issues](https://img.shields.io/badge/PRs%20and%20issues-welcome-brightgreen)
 
