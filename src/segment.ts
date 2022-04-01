@@ -13,7 +13,7 @@ export abstract class Segment {
         this.transactionId = tran;
     }
 
-    static async decode(_session: Session<things.SpecSpace>, _stream: common.Readable, _prefix: number, _tran: number): Promise<Segment> {
+    static async decode(_session: Session, _stream: common.Readable, _prefix: number, _tran: number): Promise<Segment> {
         throw new Error("Not implemented");
     }
 
@@ -30,7 +30,7 @@ export abstract class Segment {
         await this.encode(stream);
     }
 
-    static async read(session: Session<things.SpecSpace>, stream: common.Readable, boundTo: common.PeerType): Promise<Segment> {
+    static async read(session: Session, stream: common.Readable, boundTo: common.PeerType): Promise<Segment> {
         const [tran, prefix] = [...await stream.read(2)];
         const concreteClass = {
             "server": [
@@ -55,14 +55,14 @@ export abstract class Segment {
 
 export class InvokeMethodSegment extends Segment {
     readonly boundTo = "server";
-    payload: things.Method<things.MethodSpec>;
+    payload: things.Method;
 
-    constructor(tran: number, payload: things.Method<things.MethodSpec>) {
+    constructor(tran: number, payload: things.Method) {
         super(tran);
         this.payload = payload;
     }
 
-    static override async decode(session: Session<things.SpecSpace>, stream: common.Readable, prefix: number, tran: number): Promise<InvokeMethodSegment> {
+    static override async decode(session: Session, stream: common.Readable, prefix: number, tran: number): Promise<InvokeMethodSegment> {
         // read IDs
         let numericId = (await stream.read(1))[0];
         let numericEntityId: number|undefined = undefined; // the signature of an entity type
@@ -129,14 +129,14 @@ export class InvokeMethodSegment extends Segment {
 
 export class ConfResponseSegment extends Segment {
     readonly boundTo = "server";
-    payload: things.Confirmation<things.ConfSpec>;
+    payload: things.Confirmation;
 
-    constructor(tran: number, payload: things.Confirmation<things.ConfSpec>) {
+    constructor(tran: number, payload: things.Confirmation) {
         super(tran);
         this.payload = payload;
     }
 
-    static override async decode(session: Session<things.SpecSpace>, stream: common.Readable, prefix: number, tran: number): Promise<ConfResponseSegment> {
+    static override async decode(session: Session, stream: common.Readable, prefix: number, tran: number): Promise<ConfResponseSegment> {
         // find spec
         const transaction = session.transactions.find(x => x.id == tran);
         if(!transaction)
@@ -171,14 +171,14 @@ export class ConfResponseSegment extends Segment {
 
 export class MethodReturnSegment extends Segment {
     readonly boundTo = "client";
-    payload: things.Method<things.MethodSpec>;
+    payload: things.Method;
 
-    constructor(tran: number, payload: things.Method<things.MethodSpec>) {
+    constructor(tran: number, payload: things.Method) {
         super(tran);
         this.payload = payload;
     }
 
-    static override async decode(session: Session<things.SpecSpace>, stream: common.Readable, prefix: number, tran: number): Promise<MethodReturnSegment> {
+    static override async decode(session: Session, stream: common.Readable, prefix: number, tran: number): Promise<MethodReturnSegment> {
         // find spec
         const transaction = session.transactions.find(x => x.id == tran);
         if(!transaction)
@@ -221,7 +221,7 @@ export class EntityUpdateSegment extends Segment {
         this.payload = payload;
     }
 
-    static override async decode(session: Session<things.SpecSpace>, stream: common.Readable, _prefix: number, tran: number): Promise<EntityUpdateSegment> {
+    static override async decode(session: Session, stream: common.Readable, _prefix: number, tran: number): Promise<EntityUpdateSegment> {
         const repr = new EntityRepr();
         repr.specSpace = session.specSpace;
         const value = await repr.read(stream);
@@ -232,7 +232,7 @@ export class EntityUpdateSegment extends Segment {
         await stream.write(Buffer.from([1 << 6]));
         const repr = new EntityRepr();
         repr.specSpace = {
-            entities: { [this.payload.numericId]: this.payload as things.Entity<things.EntitySpec> },
+            entities: { [this.payload.numericId]: this.payload as things.Entity },
             specVersion: "2",
             project: "$tmp!",
             globalMethods: {},
@@ -244,14 +244,14 @@ export class EntityUpdateSegment extends Segment {
 
 export class ConfRequestSegment extends Segment {
     readonly boundTo = "client";
-    payload: things.Confirmation<things.ConfSpec>;
+    payload: things.Confirmation;
 
-    constructor(tran: number, payload: things.Confirmation<things.ConfSpec>) {
+    constructor(tran: number, payload: things.Confirmation) {
         super(tran);
         this.payload = payload;
     }
 
-    static override async decode(session: Session<things.SpecSpace>, stream: common.Readable, prefix: number, tran: number): Promise<ConfRequestSegment> {
+    static override async decode(session: Session, stream: common.Readable, prefix: number, tran: number): Promise<ConfRequestSegment> {
         // the ID is in the prefix
         const numericId = prefix & 0x0F;
         const conf = session.specSpace.confirmations[numericId].clone();
@@ -290,7 +290,7 @@ export class MethodErrorSegment extends Segment {
         this.payload = payload;
     }
 
-    static override async decode(_session: Session<things.SpecSpace>, stream: common.Readable, _prefix: number, tran: number): Promise<MethodErrorSegment> {
+    static override async decode(_session: Session, stream: common.Readable, _prefix: number, tran: number): Promise<MethodErrorSegment> {
         const payload = await new FieldArray({
             required: { code: new Int(2), msg: new Str() },
             optional: { },

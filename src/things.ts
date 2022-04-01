@@ -6,19 +6,20 @@ import { Session, InvocationEvent } from "./session";
 
 export interface EntitySpec {
     fields: FieldSpec;
-    methods: { [numericId: number]: Method<MethodSpec> };
+    methods: { [numericId: number]: Method };
 }
 export type ValuedEntity<E extends Entity<EntitySpec> = Entity<EntitySpec>> =
     Omit<E, "value"> &
     Required<Pick<E, "value">>;
 export type GetEntitySpec<E> = E extends Entity<infer S> ? S : never;
-export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
+
+export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
     value?: FieldValue<Spec["fields"]>;
 
-    protected static readonly session?: Session<SpecSpace>;
-    readonly dynSession?: Session<SpecSpace>;
+    protected static readonly session?: Session;
+    readonly dynSession?: Session;
 
     constructor(spec: Spec, numericId: number, value?: FieldValue<Spec["fields"]>) {
         super();
@@ -48,14 +49,17 @@ export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
     }
 }
 
+
+
 export interface MethodSpec {
     name: string;
     params: FieldSpec;
     returns: FieldSpec;
-    confirmations: Confirmation<any>[];
+    confirmations: Confirmation[];
 }
 export type GetMethodSpec<M> = M extends Method<infer S> ? S : never;
-export abstract class Method<Spec extends MethodSpec> extends Cloneable {
+
+export abstract class Method<Spec extends MethodSpec = MethodSpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
     readonly entityNumericId?: number;
@@ -92,11 +96,14 @@ export abstract class Method<Spec extends MethodSpec> extends Cloneable {
     }
 }
 
+
+
 export interface ConfSpec {
     request: FieldSpec;
     response: FieldSpec;
 }
-export abstract class Confirmation<Spec extends ConfSpec> extends Cloneable {
+
+export abstract class Confirmation<Spec extends ConfSpec = ConfSpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
 
@@ -110,12 +117,14 @@ export abstract class Confirmation<Spec extends ConfSpec> extends Cloneable {
     }
 }
 
+
+
 export interface SpecSpace {
     specVersion: "2",
     project: string,
-    entities: { [id: number]: Entity<EntitySpec> };
-    globalMethods: { [id: number]: Method<MethodSpec> };
-    confirmations: { [id: number]: Confirmation<ConfSpec> };
+    entities: { [id: number]: Entity };
+    globalMethods: { [id: number]: Method };
+    confirmations: { [id: number]: Confirmation };
 }
 
 type ObjValues<O> = O extends any ? O[keyof O] : never;

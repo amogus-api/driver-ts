@@ -6,7 +6,7 @@ import * as segment from "./segment";
 import { FieldValue } from "./repr";
 import { NotNull } from "./common";
 
-export type ConfCallback<T extends things.Method<any>> =
+export type ConfCallback<T extends things.Method> =
     (data: T["spec"]["confirmations"][number]) =>
    Promise<T["spec"]["confirmations"][number]["response"]>;
 
@@ -17,11 +17,11 @@ export type IncompleteTransactionEvent =
     { type: "finished" };
 export type TransactionEvent = IncompleteTransactionEvent & { tran: Transaction };
 export class Transaction extends common.EventHost<TransactionEvent> {
-    session: Session<things.SpecSpace>;
+    session: Session;
     id: number;
     segments: segment.Segment[] = [];
 
-    constructor(session: Session<things.SpecSpace>, id: number) {
+    constructor(session: Session, id: number) {
         super();
         this.session = session;
         this.id = id;
@@ -42,14 +42,14 @@ export class Transaction extends common.EventHost<TransactionEvent> {
     }
 }
 
-export class InvocationEvent<M extends NotNull<things.Method<things.MethodSpec>, "params">> {
+export class InvocationEvent<M extends NotNull<things.Method, "params">> {
     readonly type = "method_invocation";
     method: M;
 
     private event: TranSessionEvent;
-    private session: Session<things.SpecSpace>;
+    private session: Session;
 
-    constructor(event: TranSessionEvent, session: Session<things.SpecSpace>) {
+    constructor(event: TranSessionEvent, session: Session) {
         const methInvoke = event.transaction.segments[0] as segment.InvokeMethodSegment;
 
         this.event = event;
@@ -59,7 +59,7 @@ export class InvocationEvent<M extends NotNull<things.Method<things.MethodSpec>,
         this.method.sessionEvent = this;
     }
 
-    async confirm<C extends things.Confirmation<things.ConfSpec>>(conf: C, data: C["request"]) {
+    async confirm<C extends things.Confirmation>(conf: C, data: C["request"]) {
         await this.session.writeSegment(new segment.ConfRequestSegment(this.event.transaction.id,
             { ...conf, request: data }));
 
@@ -95,7 +95,7 @@ export type TranSessionEvent = { type: "new_transaction", transaction: Transacti
 export type EntityEvent = { type: "entity_update", entity: things.ValuedEntity };
 export type SessionEvent = TranSessionEvent | InvocationEvent<any> | EntityEvent;
 
-export abstract class Session<Spec extends things.SpecSpace> extends common.EventHost<SessionEvent> {
+export abstract class Session<Spec extends things.SpecSpace = things.SpecSpace> extends common.EventHost<SessionEvent> {
     specSpace: Spec;
     transactions: Transaction[] = [];
 
@@ -199,7 +199,7 @@ export abstract class Session<Spec extends things.SpecSpace> extends common.Even
         return transaction;
     }
 
-    async invokeMethod<T extends things.Method<any>>(
+    async invokeMethod<T extends things.Method>(
         method: T,
         confirmationCallback?: ConfCallback<T>
     ): Promise<FieldValue<T["spec"]["returns"]>> {
@@ -238,5 +238,5 @@ export abstract class Session<Spec extends things.SpecSpace> extends common.Even
 }
 
 export interface BoundSession {
-    session: Session<things.SpecSpace>;
+    session: Session;
 }

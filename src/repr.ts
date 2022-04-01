@@ -7,7 +7,7 @@ import { ValuedEntity, SpecSpace } from "./things";
 
 export abstract class DataRepr<T> {
     specSpace?: SpecSpace;
-    session?: Session<SpecSpace>;
+    session?: Session;
 
     abstract write(stream: Writable, value: T): Promise<void>;
     abstract read(stream: Readable): Promise<T>;
