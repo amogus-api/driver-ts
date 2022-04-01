@@ -5,7 +5,7 @@ describe("Atomic data type validation", () => {
     test("Int(1)[val]", async () => {
         const [a, b] = createDummyLinks();
         const repr = new amogus.repr.Int(1, { val: [10, 100] });
-        
+
         const values = [0, 1, 50, 123, 255];
         for(const val of values) {
             await repr.write(a, val);
@@ -54,6 +54,33 @@ describe("Atomic data type validation", () => {
             const value = await repr.read(b);
             expect(value).toEqual(val);
             expect(repr.validate(value)).toEqual(true);
+        }
+    });
+
+    test("List[len]", async () => {
+        const [a, b] = createDummyLinks();
+        const repr = new amogus.repr.List(new amogus.repr.Int(4), 1, { len: [0, 3] });
+
+        const pass = [
+            [],
+            [257536],
+            [13461, 12541],
+            [84239, 418734, 184340],
+        ];
+        const fail = [
+            [7198, 1234, 1234, 1234],
+            [7458092, 29352, 89234, 454534, 345343453, 34534],
+        ];
+
+        for(const val of pass) {
+            await repr.write(a, val);
+            const value = await repr.read(b);
+            expect(repr.validate(value)).toEqual(true);
+        }
+        for(const val of fail) {
+            await repr.write(a, val);
+            const value = await repr.read(b);
+            expect(repr.validate(value)).toEqual(false);
         }
     });
 });

@@ -5,7 +5,7 @@ describe("Atomic data type representation", () => {
     test("Int(1)", async () => {
         const [a, b] = createDummyLinks();
         const repr = new amogus.repr.Int(1);
-        
+
         const values = [0, 1, 123, 255];
         for(const val of values) {
             await repr.write(a, val);
@@ -46,9 +46,26 @@ describe("Atomic data type representation", () => {
         }
 
         // test truthy values other than "1"
-        a.write(Buffer.from([2]));
+        await a.write(Buffer.from([2]));
         expect(await repr.read(b)).toEqual(true);
-        a.write(Buffer.from([100]));
+        await a.write(Buffer.from([100]));
         expect(await repr.read(b)).toEqual(true);
+    });
+
+    test("List()", async () => {
+        const [a, b] = createDummyLinks();
+        const repr = new amogus.repr.List(new amogus.repr.Int(4), 1);
+
+        const values = [
+            [0, 1],
+            [1, 2],
+            [123, 456],
+            [123, 456, 789],
+            [123, 456, 789, 101112],
+        ];
+        for(const val of values) {
+            await repr.write(a, val);
+            expect(await repr.read(b)).toEqual(val);
+        }
     });
 });

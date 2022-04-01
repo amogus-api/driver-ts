@@ -114,13 +114,57 @@ export class Str extends DataRepr<string> {
     }
 }
 
+interface ListValidators {
+    len?: range;
+}
+export class List<T> extends DataRepr<T[]> {
+    itemRepr: DataRepr<T>;
+    validators?: ListValidators;
+
+    private szRepr: Int;
+
+    constructor(itemRepr: DataRepr<T>, szLen: number, validators?: ListValidators) {
+        super();
+        this.itemRepr = itemRepr;
+        this.szRepr = new Int(szLen);
+        this.validators = validators;
+    }
+
+    override async write(stream: Writable, value: T[]) {
+        await this.szRepr.write(stream, value.length);
+        for(const item of value)
+            await this.itemRepr.write(stream, item);
+    }
+
+    override async read(stream: Readable): Promise<T[]> {
+        const len = await this.szRepr.read(stream);
+        const list: T[] = [];
+        for(let i = 0; i < len; i++)
+            list.push(await this.itemRepr.read(stream));
+        return list;
+    }
+
+    override validate(value: T[]): boolean {
+        if(this.validators?.len) {
+            if(!rangeCheck(this.validators.len, value.length))
+                return false;
+        }
+
+        for(const item of value)
+            if(!this.itemRepr.validate(item))
+                return false;
+
+        return true;
+    }
+}
+
 export interface FieldSpec {
     required: { [name: string]: DataRepr<any> };
     optional: { [name: string]: readonly [number, DataRepr<any>] };
 }
 export type FieldValue<Spec extends FieldSpec> =
-          { [K in keyof Spec["required"]]: TsType<Spec["required"][K]> }
-        & { [K in keyof Spec["optional"]]?: TsType<Spec["optional"][K][1]> };
+        { [K in keyof Spec["required"]]: TsType<Spec["required"][K]> } &
+        { [K in keyof Spec["optional"]]?: TsType<Spec["optional"][K][1]> };
 export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> extends DataRepr<Value> {
     // The line above just makes sure that we only pass fields with valid names and values to the functions
 
