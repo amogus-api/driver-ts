@@ -83,7 +83,7 @@ describe("Entity method invocation", () => {
                     return;
 
                 const entity = ev.entity;
-                expect(entity).toBeInstanceOf(api.MassiveFields);
+                expect(entity).toBeInstanceOf(clientSession.MassiveFields);
                 expect(entity.value.id).toEqual(123);
                 expect(entity.value.g).toEqual(420);
                 resolve();

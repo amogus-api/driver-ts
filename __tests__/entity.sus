@@ -1,5 +1,18 @@
 include impostor.sus
 
+globalmethod global_echo(0) {
+    str: Str;
+    returns {
+        str: Str;
+    }
+    confirmations { Silly }
+}
+
+confirmation Silly(0) {
+    request { }
+    response { }
+}
+
 entity Test(0) {
     id: Int(8);
     

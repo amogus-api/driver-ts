@@ -2,7 +2,7 @@ import * as amogus from "../src/index";
 import * as api from "./entity_output/ts/index";
 
 describe("Nice server API", () => {
-    const { client, server } = amogus.transport.universal.createDummyPair(api.$specSpace);
+    const { client, server } = amogus.transport.universal.createDummyPair<ReturnType<typeof api.$specSpace>>(api.$specSpace);
     const clientSession = api.$bind(client);
     const serverSession = new amogus.Server(server, { suffix: "!" });
 

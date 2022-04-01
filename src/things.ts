@@ -27,9 +27,8 @@ export abstract class Entity<Spec extends EntitySpec> extends Cloneable {
         this.value = value;
     }
 
-    update(_params: { entity: ValuedEntity }): Promise<Record<string, never>> {
-        throw new Error("Not implemented");
-    }
+    abstract update(_params: { entity: ValuedEntity }): Promise<Record<string, never>>;
+
     async $update(toUpdate: Partial<FieldValue<Spec["fields"]>>): Promise<void> {
         this.value = { ...this.value, ...toUpdate };
 
@@ -124,5 +123,5 @@ export type AllMethods<Spec extends SpecSpace> =
     ObjValues<Spec["globalMethods"]> |
     ObjValues<GetEntitySpec<ObjValues<Spec["entities"]>>["methods"]>;
 
-export type SpecSpaceGen<Spec extends SpecSpace> = (session: Session<Spec>) => Spec;
+export type SpecSpaceGen<Spec extends SpecSpace = SpecSpace> = (session: Session<Spec>) => Spec;
 export type SpaceOfGen<Gen> = Gen extends SpecSpaceGen<infer S> ? S : never;
