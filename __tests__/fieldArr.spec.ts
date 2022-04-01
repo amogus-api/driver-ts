@@ -4,12 +4,13 @@ import { createDummyLinks } from "../src/transport/universal";
 describe("Field arrays", () => {
     const fieldSpec = {
         required: {
-            foo: new amogus.repr.Int(1),
+            foo: new amogus.repr.Int(4, { val: [0, 1000] }),
             bar: new amogus.repr.Str(),
         },
         optional: {
-            baz: [0, new amogus.repr.Int(4)] as [number, amogus.repr.Int],
-        }
+            baz: [0, new amogus.repr.Int(4)] as const,
+            baf: [1, new amogus.repr.Int(2)] as const,
+        },
     };
 
 
@@ -38,18 +39,20 @@ describe("Field arrays", () => {
         const repr = new amogus.repr.FieldArray(fieldSpec);
 
         const values = [
-            { foo: 60, bar: "hi" },
-            { foo: 100, bar: "hello world" },
-            { foo: 50, bar: "aboba" },
-            { foo: 90, bar: "amogus" },
-            { foo: 99, bar: "i like turtles" },
-        ];
+            [true, { foo: 60, bar: "hi" }],
+            [true, { foo: 100, bar: "hello world" }],
+            [true, { foo: 50, bar: "aboba" }],
+            [true, { foo: 90, bar: "amogus" }],
+            [true, { foo: 99, bar: "i like turtles" }],
+            [false, { foo: 17452783, bar: "fail!" }],
+            [false, { foo: 18922673, bar: "fail!" }],
+        ] as const;
 
-        for(const val of values) {
+        for(const [pass, val] of values) {
             await repr.write(a, val);
             const value = await repr.read(b);
             expect(value).toEqual(val);
-            expect(repr.validate(value)).toEqual(true);
+            expect(repr.validate(value)).toEqual(pass);
         }
     });
 
@@ -70,11 +73,12 @@ describe("Field arrays", () => {
         for(const val of values) {
             await repr.write(a, val);
             const value = await repr.read(b);
-            
+
             expect(value).toEqual(val);
             expect(repr.validate(value)).toEqual(true);
         }
     });
+
 
     test("Required + optional fields (high-packing mode)", async () => {
         const [a, b] = createDummyLinks();
@@ -98,11 +102,12 @@ describe("Field arrays", () => {
         }
     });
 
+
     test("Invalid ids", async () => {
         const [a, b] = createDummyLinks();
         const repr = new amogus.repr.FieldArray({
             required: { },
-            optional: { foo: [0, new amogus.repr.Int(1)] }
+            optional: { foo: [0, new amogus.repr.Int(1)] },
         });
 
         repr.setMode([true, false]);
@@ -113,7 +118,7 @@ describe("Field arrays", () => {
         } catch(e) {
             expect((e as Error).message).toEqual("Met field with unknown id \"123\" in normal mode");
         }
-        
+
         repr.setMode([true, true]);
         await a.write(Buffer.from([0x40, 123]));
         try {

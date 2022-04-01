@@ -83,4 +83,24 @@ describe("Atomic data type validation", () => {
             expect(repr.validate(value)).toEqual(false);
         }
     });
+
+    test("List(Int[val])", async () => {
+        const [a, b] = createDummyLinks();
+        const repr = new amogus.repr.List(new amogus.repr.Int(4, { val: [10, 100] }), 1);
+
+        const values = [
+            [true, [30, 50, 70, 90]],
+            [true, [10, 20, 30, 40]],
+            [true, [15, 21, 15, 62]],
+            [false, [0, 1, 2, 3]],
+            [false, [316, 1493, 1920, 123]],
+            [false, [6, 3, 8, 1, 8, 4, 3, 4]],
+        ] as [boolean, number[]][];
+
+        for(const [pass, val] of values) {
+            await repr.write(a, val);
+            const value = await repr.read(b);
+            expect(repr.validate(value)).toEqual(pass);
+        }
+    });
 });
