@@ -1,6 +1,6 @@
 {
   "name": "amogus-driver",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "AMOGUS wire protocol implementation for TypeScript",
   "main": "lib/index.js",
   "module": "lib/index.esm.js",
@@ -32,7 +32,7 @@
   "bugs": {
     "url": "https://github.com/amogus-api/driver-ts/issues"
   },
-  "homepage": "https://github.com/amogus-api/driver-ts#readme",
+  "homepage": "https://github.com/amogus-api/info#readme",
   "devDependencies": {
     "@types/bluebird": "^3.5.36",
     "@types/jest": "^27.4.1",

@@ -12,6 +12,9 @@ This library provides an AMOGUS implementation for JS and TS in all major enviro
 npm i amogus-driver
 ```
 
+# How do I use it??
+There's a complete tutorial over [here](https://github.com/amogus-api/info/tree/master/amogus-tutorial).
+
 # Testing
 **Warning**: this repository uses a `pnpm` lock file, hence you can't substitute it for `npm` below.
 ```
