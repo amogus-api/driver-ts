@@ -1,6 +1,10 @@
 import * as amogus from "../src/index";
 import * as api from "./entity_output/ts/index";
 
+function delay(ms: number) {
+    return new Promise((res) => setTimeout(res, ms));
+}
+
 describe("Nice server API", () => {
     const { client, server } = amogus.transport.universal.createDummyPair<ReturnType<typeof api.$specSpace>>(api.$specSpace);
     const clientSession = api.$bind(client);
@@ -15,6 +19,11 @@ describe("Nice server API", () => {
         const params = method.params;
         await method.return({ str: params.str });
     });
+    serverSession.onInvocation("Test.limit_echo", async (method, _) => {
+        const params = method.params;
+        await method.return({ str: params.str });
+    });
+
 
     test("State preservation", async () => {
         expect(await clientSession.Test.staticEcho({ str: "Hello" })).toEqual({ str: "Hello!" });
@@ -22,12 +31,13 @@ describe("Nice server API", () => {
         expect(await clientSession.Test.staticEcho({ str: "Hello" })).toEqual({ str: "Hello!!!" });
     });
 
+
     test("Params validation", async () => {
         const cases = [
             [true, "Helloo"],
             [true, "12345"],
             [false, "No."],
-            [false, "Noooooooooooooooooooooooooooo"],
+            [false, "Noooooooooooooooooooooooooooo."],
             [true, "AAAAAAAAAA"],
             [false, "Nooooooo.... maybe? just kidding"],
             [true, "Testing"],
@@ -42,8 +52,21 @@ describe("Nice server API", () => {
             } catch(err) {
                 if(valid)
                     fail("Expected validation success");
-                expect(err).toEqual({ code: 65534, message: "validation failed" });
+                expect(err).toEqual({ code: clientSession.ErrorCode.validation_failed, message: "validation failed" });
             }
         }
+    });
+
+
+    test("Rate limiting", async () => {
+        expect(await clientSession.Test.limitEcho({ str: "Hello" })).toEqual({ str: "Hello" });
+        try {
+            await clientSession.Test.limitEcho({ str: "Hello" });
+            fail("Expected error");
+        } catch(err) {
+            expect(err).toEqual({ code: clientSession.ErrorCode.rate_limit, message: "rate limit exceeded" });
+        }
+        await delay(1000);
+        expect(await clientSession.Test.limitEcho({ str: "Hello" })).toEqual({ str: "Hello" });
     });
 });

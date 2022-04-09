@@ -56,6 +56,7 @@ export interface MethodSpec {
     params: FieldSpec;
     returns: FieldSpec;
     confirmations: Confirmation[];
+    rateLimit?: readonly [number, number];
 }
 export type GetMethodSpec<M> = M extends Method<infer S> ? S : never;
 
