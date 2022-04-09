@@ -1,6 +1,7 @@
 // The nice server-side API
 
 import { NotNull } from "./common";
+import { FieldArray } from "./repr";
 import { InvocationEvent, Session as SessionType } from "./session";
 import { SpecSpace, AllMethods } from "./things";
 
@@ -26,6 +27,14 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
             const method = ev.method as M;
             if(method.spec.name !== name)
                 return;
+            if(!method.params)
+                return;
+
+            // check validity
+            if(!new FieldArray(method.spec.params).validate(method.params)) {
+                await method.error(65534, "validation failed");
+                return;
+            }
 
             // @ts-expect-error params is guaranteed to be not null
             const newState = await callback(method, this.state);
