@@ -52,7 +52,7 @@ describe("Nice server API", () => {
             } catch(err) {
                 if(valid)
                     fail("Expected validation success");
-                expect(err).toEqual({ code: clientSession.ErrorCode.validation_failed, message: "validation failed" });
+                expect((err as {code: number}).code).toEqual(clientSession.ErrorCode.validation_failed);
             }
         }
     });

@@ -54,8 +54,9 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
             }
 
             // check validity
-            if(!new FieldArray(method.spec.params).validate(method.params!)) {
-                await method.error(65534, "validation failed");
+            const error = new FieldArray(method.spec.params).findError(method.params!);
+            if(error) {
+                await method.error(65534, error);
                 return;
             }
 

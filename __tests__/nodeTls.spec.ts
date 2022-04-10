@@ -7,10 +7,10 @@ describe("Node TLS", () => {
     test("TLS", async () => {
         // set up a server
         const listener = new TlsListener(api.$specSpace, {
-            key: fs.readFileSync('__tests__/certs/server.key'),
-            cert: fs.readFileSync('__tests__/certs/server.cert'),
+            key: fs.readFileSync("__tests__/certs/server.key"),
+            cert: fs.readFileSync("__tests__/certs/server.cert"),
             port: 1234,
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
         }, (session) => {
             session.subscribe(async (event) => {
                 // listen to echo() invocations
@@ -29,7 +29,7 @@ describe("Node TLS", () => {
         const client = api.$bind(new TlsClient(api.$specSpace, {
             host: "localhost",
             port: 1234,
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
         }));
 
         // call echo()

@@ -11,7 +11,7 @@ export abstract class DataRepr<T> {
 
     abstract write(stream: Writable, value: T): Promise<void>;
     abstract read(stream: Readable): Promise<T>;
-    abstract validate(value: T): boolean;
+    abstract findError(value: T): string|null;
 }
 // The type that a DataRepr encloses
 export type TsType<T> = T extends DataRepr<infer R> ? R : never;
@@ -46,13 +46,13 @@ export class Int extends DataRepr<number> {
         return value;
     }
 
-    override validate(value: number): boolean {
+    override findError(value: number) {
         if(this.validators?.val) {
             const [low, high] = this.validators.val;
             if(value < low || value > high)
-                return false;
+                return `Int[val]: "${value}" is out of range ${low}..${high}`;
         }
-        return true;
+        return null;
     }
 }
 
@@ -70,8 +70,8 @@ export class Bool extends DataRepr<boolean> {
         return val !== 0;
     }
 
-    override validate(_value: boolean): boolean {
-        return true;
+    override findError(_value: boolean) {
+        return null;
     }
 }
 
@@ -101,16 +101,18 @@ export class Str extends DataRepr<string> {
         return utf8.toString("utf8");
     }
 
-    override validate(value: string): boolean {
+    override findError(value: string) {
         if(this.validators?.len) {
+            const [low, high] = this.validators.len;
             if(!rangeCheck(this.validators.len, value.length))
-                return false;
+                return `Str[len]: "${value.length}" is out of range ${low}..${high}`;
         }
         if(this.validators?.match) {
-            const match = value.match(this.validators.match);
-            return (match && value === match[0]) ?? false;
+            const pass = this.validators.match.test(value);
+            if(!pass)
+                return `Str[match]: "${value}" does not match ${this.validators.match.toString()}`;
         }
-        return true;
+        return null;
     }
 }
 
@@ -144,17 +146,21 @@ export class List<T> extends DataRepr<T[]> {
         return list;
     }
 
-    override validate(value: T[]): boolean {
+    override findError(value: T[]) {
         if(this.validators?.len) {
+            const [low, high] = this.validators.len;
             if(!rangeCheck(this.validators.len, value.length))
-                return false;
+                return `Str[len]: "${value.length}" is out of range ${low}..${high}`;
         }
 
-        for(const item of value)
-            if(!this.itemRepr.validate(item))
-                return false;
+        for(let i = 0; i < value.length; i++) {
+            const item = value[i];
+            const error = this.itemRepr.findError(item);
+            if(error)
+                return `List item[${i}]: ${error}`;
+        }
 
-        return true;
+        return null;
     }
 }
 
@@ -281,7 +287,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
         return value as unknown as Value;
     }
 
-    override validate(value: Value): boolean {
+    override findError(value: Value) {
         for(const k in value) {
             let repr: DataRepr<any>;
 
@@ -290,11 +296,12 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
             else
                 repr = this.spec.optional[k][1];
 
-            if(!repr.validate(value[k]))
-                return false;
+            const error = repr.findError(value[k]);
+            if(error)
+                return `FieldArray.${k}: ${error}`;
         }
 
-        return true;
+        return null;
     }
 }
 
@@ -326,8 +333,8 @@ export class Entity extends DataRepr<ValuedEntity> {
         return entity;
     }
 
-    override validate(value: ValuedEntity) {
-        return new FieldArray(value.spec.fields).validate(value.value);
+    override findError(value: ValuedEntity) {
+        return new FieldArray(value.spec.fields).findError(value.value);
     }
 }
 
@@ -347,7 +354,8 @@ export class EnumOrBf<T extends number> extends DataRepr<T> {
         return await this.int.read(stream) as T;
     }
 
-    override validate(value: T) {
-        return (value >= 0) && (value < (1 << (8 * this.int.size)));
+    override findError(value: T) {
+        const valid = (value >= 0) && (value < (1 << (8 * this.int.size)));
+        return valid ? null : "Enum or Bitfield: value out of range";
     }
 }

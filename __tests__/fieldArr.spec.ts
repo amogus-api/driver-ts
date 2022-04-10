@@ -52,7 +52,7 @@ describe("Field arrays", () => {
             await repr.write(a, val);
             const value = await repr.read(b);
             expect(value).toEqual(val);
-            expect(repr.validate(value)).toEqual(pass);
+            expect(repr.findError(value) === null).toEqual(pass);
         }
     });
 
@@ -75,7 +75,7 @@ describe("Field arrays", () => {
             const value = await repr.read(b);
 
             expect(value).toEqual(val);
-            expect(repr.validate(value)).toEqual(true);
+            expect(repr.findError(value) === null).toEqual(true);
         }
     });
 
@@ -98,7 +98,7 @@ describe("Field arrays", () => {
             const value = await repr.read(b);
 
             expect(value).toEqual(val);
-            expect(repr.validate(value)).toEqual(true);
+            expect(repr.findError(value) === null).toEqual(true);
         }
     });
 
