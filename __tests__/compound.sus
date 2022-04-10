@@ -1,0 +1,15 @@
+compound Color {
+    r: Int(1);
+    g: Int(1);
+    b: Int(1);
+}
+
+compound TwoColors {
+    first: Color;
+    second: Color;
+}
+
+compound MaybeTwoColors {
+    first: Color;
+    second: opt(0) Color;
+}
