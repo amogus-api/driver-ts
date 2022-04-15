@@ -150,7 +150,7 @@ export class List<T> extends DataRepr<T[]> {
         if(this.validators?.len) {
             const [low, high] = this.validators.len;
             if(!rangeCheck(this.validators.len, value.length))
-                return `Str[len]: "${value.length}" is out of range ${low}..${high}`;
+                return `List[len]: "${value.length}" is out of range ${low}..${high}`;
         }
 
         for(let i = 0; i < value.length; i++) {
@@ -158,6 +158,41 @@ export class List<T> extends DataRepr<T[]> {
             const error = this.itemRepr.findError(item);
             if(error)
                 return `List item[${i}]: ${error}`;
+        }
+
+        return null;
+    }
+}
+
+interface BinValidators {
+    len?: range;
+}
+export class Bin extends DataRepr<Buffer> {
+    validators?: BinValidators;
+
+    private szRepr: Int;
+
+    constructor(validators?: BinValidators) {
+        super();
+        this.szRepr = new Int(2);
+        this.validators = validators;
+    }
+
+    override async write(stream: Writable, value: Buffer) {
+        await this.szRepr.write(stream, value.length);
+        await stream.write(value);
+    }
+
+    override async read(stream: Readable): Promise<Buffer> {
+        const len = await this.szRepr.read(stream);
+        return await stream.read(len);
+    }
+
+    override findError(value: Buffer) {
+        if(this.validators?.len) {
+            const [low, high] = this.validators.len;
+            if(!rangeCheck(this.validators.len, value.length))
+                return `Bin[len]: "${value.length}" is out of range ${low}..${high}`;
         }
 
         return null;

@@ -68,4 +68,21 @@ describe("Atomic data type representation", () => {
             expect(await repr.read(b)).toEqual(val);
         }
     });
+
+    test("Bin()", async () => {
+        const [a, b] = createDummyLinks();
+        const repr = new amogus.repr.Bin();
+
+        const values = [
+            Buffer.from([0, 1]),
+            Buffer.from([1, 2]),
+            Buffer.from([123, 231]),
+            Buffer.from([123, 231, 76]),
+            Buffer.from([123, 231, 76, 53]),
+        ];
+        for(const val of values) {
+            await repr.write(a, val);
+            expect(await repr.read(b)).toEqual(val);
+        }
+    });
 });
