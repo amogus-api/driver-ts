@@ -16,7 +16,7 @@ export default [
       format: 'cjs'
     },
     plugins: [typescript({ tsconfig: './cfg/buildconfig.node.json' })],
-    external: ['tls', '../index']
+    external: ['tls', '../index', './universal']
   },
   {
     input: './src/transport/universal.ts',

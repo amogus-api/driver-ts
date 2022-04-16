@@ -1,49 +1,26 @@
 // Transport layer implementations for Node.JS
 
-import { Duplex } from "../index";
+import { BufferedLink } from "./universal";
 import { SpecSpace, SpecSpaceGen } from "../index";
 import { Session } from "../index";
 import * as tls from "tls";
 
-class TlsStream extends Duplex {
+class TlsStream extends BufferedLink {
     socket: tls.TLSSocket;
-    private readBuf = Buffer.alloc(0);
 
     constructor(socket: tls.TLSSocket) {
         super();
         this.socket = socket;
-        socket.on("data", (data) => {
-            this.readBuf = Buffer.concat([this.readBuf, data]);
+        socket.on("data", (data: Buffer) => {
+            this.dataArrived(data);
         });
         socket.on("close", () => {
             this.trigger({ type: "closed" });
         });
     }
 
-    async read(cnt: number): Promise<Buffer> {
-        return new Promise((resolve, _reject) => {
-            const check = () => {
-                if(this.readBuf.length >= cnt) {
-                    const data = this.readBuf.slice(0, cnt);
-                    this.readBuf = this.readBuf.slice(cnt);
-                    resolve(data);
-                    return true;
-                }
-                return false;
-            };
-            // check if data is in the buffer already
-            if(!check()) {
-                const listener = (_: Buffer) => {
-                    if(check())
-                        this.socket.removeListener("data", listener);
-                };
-                this.socket.addListener("data", listener);
-            }
-        });
-    }
-
-    async write(data: Buffer): Promise<void> {
-        return new Promise((resolve, reject) => {
+    protected async dataWrite(data: Uint8Array): Promise<void> {
+        return await new Promise((resolve, reject) => {
             this.socket.write(data, (err) => {
                 if(err)
                     reject(err);
@@ -53,7 +30,7 @@ class TlsStream extends Duplex {
         });
     }
 
-    async close(): Promise<void> {
+    override async close(): Promise<void> {
         this.socket.destroy();
         this.trigger({ type: "closed" });
     }

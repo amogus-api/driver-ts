@@ -4,19 +4,29 @@ import { Duplex } from "../index";
 import { SpecSpace, SpecSpaceGen } from "../index";
 import { Session } from "../index";
 
-class DummyLink extends Duplex {
-    other!: DummyLink;
+// Transforms event-driven interfaces to async read() and write() calls used by amogus
+export abstract class BufferedLink extends Duplex {
     private readBuf = new Uint8Array(0);
-    private listeners: ((data: Uint8Array) => any)[] = [];
+    private dataListener?: () => void;
 
-    constructor() {
-        super();
-        this.listeners.push((data) => {
-            const arr = new Uint8Array(this.readBuf.length + data.length);
-            arr.set(this.readBuf);
-            arr.set(data, this.readBuf.length);
-            this.readBuf = arr;
-        });
+    // successor calls this when new data arrives
+    protected dataArrived(data: Uint8Array) {
+        const arr = new Uint8Array(this.readBuf.length + data.length);
+        arr.set(this.readBuf);
+        arr.set(data, this.readBuf.length);
+        this.readBuf = arr;
+
+        if(this.dataListener)
+            this.dataListener();
+    }
+
+    // BufferedLink calls this when it wants to write data
+    protected abstract dataWrite(data: Uint8Array): Promise<void>;
+
+    abstract override close(): Promise<void>;
+
+    async write(data: Uint8Array): Promise<void> {
+        await this.dataWrite(data);
     }
 
     read(cnt: number): Promise<Uint8Array> {
@@ -32,21 +42,23 @@ class DummyLink extends Duplex {
             };
             // check if data is in the buffer already
             if(!check()) {
-                const listener = (_: Uint8Array) => {
+                this.dataListener = () => {
                     if(check())
-                        this.listeners = this.listeners.filter(x => x !== listener);
+                        this.dataListener = undefined;
                 };
-                this.listeners.push(listener);
             }
         });
     }
+}
 
-    async write(data: Uint8Array): Promise<void> {
-        for(const cb of this.other.listeners)
-            cb(data);
+class DummyLink extends BufferedLink {
+    other!: DummyLink;
+
+    protected async dataWrite(data: Uint8Array): Promise<void> {
+        this.other.dataArrived(data);
     }
 
-    async close(): Promise<void> {
+    override async close(): Promise<void> {
         throw new Error("Can't close a dummy link");
     }
 }
