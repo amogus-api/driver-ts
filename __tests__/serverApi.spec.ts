@@ -85,7 +85,7 @@ describe("Nice server API", () => {
 
         await clientSession.Test.staticEcho({ str: "Hello" });
         expect(console.log).toHaveBeenCalledWith(
-            "[server event: method_invocation]\nstate = {\n    \"suffix\": \"!\"\n}\ndata = {\n    \"str\": \"Hello\"\n}\n"
+            "[server event: method_invocation: Test.static_echo]\nstate = {\n    \"suffix\": \"!\"\n}\ndata = {\n    \"str\": \"Hello\"\n}\n"
         );
 
         niceServer.debug = false;
