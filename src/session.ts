@@ -42,7 +42,7 @@ export class Transaction extends common.EventHost<TransactionEvent> {
     }
 }
 
-export class InvocationEvent<M extends NotNull<things.Method, "params">> {
+export class InvocationEvent<M extends NotNull<things.Method, "params"> = NotNull<things.Method, "params">> {
     readonly type = "method_invocation";
     method: M;
 
@@ -94,7 +94,7 @@ export class InvocationEvent<M extends NotNull<things.Method, "params">> {
 export type TranSessionEvent = { type: "new_transaction", transaction: Transaction };
 export type EntityEvent = { type: "entity_update", entity: things.ValuedEntity };
 export type CloseEvent = { type: "close" };
-export type SessionEvent = TranSessionEvent | InvocationEvent<any> | EntityEvent | CloseEvent;
+export type SessionEvent = TranSessionEvent | InvocationEvent | EntityEvent | CloseEvent;
 
 export abstract class Session<Spec extends things.SpecSpace = things.SpecSpace> extends common.EventHost<SessionEvent> {
     specSpace: Spec;

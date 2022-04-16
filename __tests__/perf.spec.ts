@@ -4,7 +4,7 @@ import * as api from "./entity_output/ts/index";
 describe("Performance testing", () => {
     const { client, server } = amogus.transport.universal.createDummyPair<ReturnType<typeof api.$specSpace>>(api.$specSpace);
     const clientSession = api.$bind(client);
-    const serverSession = new amogus.Server(server, null);
+    const serverSession = new amogus.Server(server, { });
 
     jest.setTimeout(10000);
 

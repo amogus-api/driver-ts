@@ -8,6 +8,10 @@ globalmethod global_echo(0) {
     confirmations { Silly }
 }
 
+globalmethod reset_state(1) {
+    
+}
+
 confirmation Silly(0) {
     request { }
     response { }

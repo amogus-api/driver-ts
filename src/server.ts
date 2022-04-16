@@ -8,7 +8,9 @@ import { SpecSpace, AllMethods } from "./things";
 type MethodByName<M extends AllMethods<SpecSpace>, N extends M["spec"]["name"]> =
     Extract<M, { spec: { name: N } }>;
 
-export class Server<State, Session extends SessionType<SpecSpace>> {
+export class Server<State extends object, Session extends SessionType<SpecSpace>> {
+    debug: boolean;
+
     private session: Session;
     private state: State;
     private limiter: {
@@ -16,14 +18,38 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
         number[]
     } = {};
 
-    constructor(session: Session, initialState: State) {
+    constructor(session: Session, initialState: State, debug?: boolean) {
         this.session = session;
         this.state = initialState;
+        this.debug = debug ?? false;
+
+        if(this.debug)
+            this.log("created", {});
+
+        // debug events
+        this.session.subscribe((e) => {
+            if(e.type === "method_invocation")
+                this.log("method_invocation", e.method.params);
+            else if(e.type === "close")
+                this.log("close");
+        });
+    }
+
+    private log(tag: string, data?: object|string) {
+        if(!this.debug)
+            return;
+
+        let template = `[server event: ${tag}]\nstate = ${JSON.stringify(this.state, null, 4)}`;
+        if(data)
+            template += `\ndata = ${typeof data === "string" ? data : JSON.stringify(data, null, 4)}`;
+        template += "\n";
+
+        console.log(template);
     }
 
     onInvocation<M extends AllMethods<Session["specSpace"]>, N extends M["spec"]["name"]>(
         name: N,
-        callback: (method: NotNull<MethodByName<M, N>, "params">, state: State) => Promise<State|void|undefined>
+        callback: (method: NotNull<MethodByName<M, N>, "params">, state: State) => Promise<State|void|undefined>|State|void|undefined
     ) {
         this.session.subscribe(async (ev) => {
             if(!(ev instanceof InvocationEvent))
@@ -40,6 +66,7 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
                     const duringCurWindow = this.limiter[name]!.filter(x => Date.now() - x <= window);
 
                     if(duringCurWindow.length >= invocations) {
+                        this.log("limit_exceeded", { window, invocations });
                         await method.error(65533, "rate limit exceeded");
                         this.limiter[name] = duringCurWindow;
                         return;
@@ -56,13 +83,16 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
             // check validity
             const error = new FieldArray(method.spec.params).findError(method.params!);
             if(error) {
+                this.log("validation_failed", { error });
                 await method.error(65534, error);
                 return;
             }
 
             const newState = await callback(method, this.state);
-            if(newState !== undefined)
+            if(newState !== undefined) {
+                this.log("state_updated", newState);
                 this.state = newState;
+            }
         });
     }
 

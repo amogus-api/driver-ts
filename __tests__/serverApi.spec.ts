@@ -8,20 +8,24 @@ function delay(ms: number) {
 describe("Nice server API", () => {
     const { client, server } = amogus.transport.universal.createDummyPair<ReturnType<typeof api.$specSpace>>(api.$specSpace);
     const clientSession = api.$bind(client);
-    const serverSession = new amogus.Server(server, { suffix: "!" });
+    const niceServer = new amogus.Server(server, { suffix: "!" });
 
-    serverSession.onInvocation("Test.static_echo", async (method, state) => {
+    niceServer.onInvocation("Test.static_echo", async (method, state) => {
         const params = method.params;
         await method.return({ str: params.str + state.suffix });
         return { suffix: state.suffix + "!" };
     });
-    serverSession.onInvocation("Test.validation_echo", async (method, _) => {
+    niceServer.onInvocation("Test.validation_echo", async (method, _) => {
         const params = method.params;
         await method.return({ str: params.str });
     });
-    serverSession.onInvocation("Test.limit_echo", async (method, _) => {
+    niceServer.onInvocation("Test.limit_echo", async (method, _) => {
         const params = method.params;
         await method.return({ str: params.str });
+    });
+    niceServer.onInvocation("reset_state", async (method, _) => {
+        await method.return({ });
+        return { suffix: "!" };
     });
 
 
@@ -68,5 +72,21 @@ describe("Nice server API", () => {
         }
         await delay(1000);
         expect(await clientSession.Test.limitEcho({ str: "Hello" })).toEqual({ str: "Hello" });
+    });
+
+
+    test("Debugging", async () => {
+        await clientSession.resetState({ });
+        await delay(100);
+
+        console.log = jest.fn();
+        niceServer.debug = true;
+
+        await clientSession.Test.staticEcho({ str: "Hello" });
+        expect(console.log).toHaveBeenCalledWith(
+            "[server event: method_invocation]\nstate = {\n    \"suffix\": \"!\"\n}\ndata = {\n    \"str\": \"Hello\"\n}\n"
+        );
+
+        niceServer.debug = false;
     });
 });

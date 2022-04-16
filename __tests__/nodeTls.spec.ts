@@ -17,7 +17,7 @@ describe("Node TLS", () => {
             port: 1234,
             rejectUnauthorized: false,
         }, (session: amogus.Session<ReturnType<typeof api.$specSpace>>) => {
-            const server = new amogus.Server(session, null);
+            const server = new amogus.Server(session, { });
 
             server.onInvocation("echo", async (method, _state) => {
                 await method.return({ str: `${method.params.str} return` });
