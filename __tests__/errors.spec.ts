@@ -8,7 +8,7 @@ describe("Library errors", () => {
 
     test("call pushEntity() on the client", async () => {
         try {
-            await client.pushEntity(new session.Test({ id: 123n }) as amogus.ValuedEntity);
+            await client.pushEntity(new session.Test({ id: BigInt(123) }) as amogus.ValuedEntity);
         } catch(e) {
             expect((e as Error).message).toBe("pushEntity can only be called on the server");
         }

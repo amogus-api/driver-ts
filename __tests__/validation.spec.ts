@@ -18,13 +18,13 @@ describe("Atomic data type validation", () => {
 
     test("BigInt(16)[val]", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.BigInteger(16, { val: [10n, 100n] });
+        const repr = new amogus.repr.BigInteger(16, { val: [BigInt(10), BigInt(100)] });
 
         const values = [
-            5n, 10n, 50n, 123n, 255n,
-            1n << 80n,
-            1n << 90n,
-            1n << 100n,
+            BigInt(5), BigInt(10), BigInt(50), BigInt(123), BigInt(255),
+            BigInt(1) << BigInt(80),
+            BigInt(1) << BigInt(90),
+            BigInt(1) << BigInt(100),
         ];
         for(const val of values) {
             await repr.write(a, val);

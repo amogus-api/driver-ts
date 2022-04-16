@@ -8,8 +8,8 @@ describe("Entity method invocation", () => {
     const serverSession = api.$bind(server);
 
     let objectStore: { id: bigint, val: ValuedEntity }[] = [{
-        id: 123n,
-        val: new serverSession.MassiveFields({ id: 123n, a: 300 }) as ValuedEntity<api.MassiveFields>,
+        id: BigInt(123),
+        val: new serverSession.MassiveFields({ id: BigInt(123), a: 300 }) as ValuedEntity<api.MassiveFields>,
     }];
 
     function storeGet(id: bigint) {
@@ -66,27 +66,27 @@ describe("Entity method invocation", () => {
     });
 
     test("dynamic entity method", async () => {
-        const test = new clientSession.Test({ id: 123n });
+        const test = new clientSession.Test({ id: BigInt(123) });
         const { str } = await test.dynamicEcho({ str: "hi" });
         expect(str).toEqual("hi return (eid 123)");
     });
 
     test("get entity", async () => {
-        const entity = await clientSession.MassiveFields.$get(123n);
-        expect(entity.value.id).toEqual(123n);
+        const entity = await clientSession.MassiveFields.$get(BigInt(123));
+        expect(entity.value.id).toEqual(BigInt(123));
     });
 
     test("push entity update", async () => {
-        let entity = await clientSession.MassiveFields.$get(123n);
+        let entity = await clientSession.MassiveFields.$get(BigInt(123));
         await entity.$update({ a: 400, b: 300 });
-        entity = (await clientSession.MassiveFields.$get(123n));
-        expect(entity.value).toEqual({ id: 123n, a: 400, b: 300 });
+        entity = (await clientSession.MassiveFields.$get(BigInt(123)));
+        expect(entity.value).toEqual({ id: BigInt(123), a: 400, b: 300 });
     });
 
     test("get field via top-level getter", async () => {
-        const entity = await clientSession.MassiveFields.$get(123n);
+        const entity = await clientSession.MassiveFields.$get(BigInt(123));
         await entity.$update({ a: 300, f: 500 });
-        expect(entity.id).toEqual(123n);
+        expect(entity.id).toEqual(BigInt(123));
         expect(entity.a).toEqual(300);
         expect(entity.f).toEqual(500);
     });
@@ -99,12 +99,12 @@ describe("Entity method invocation", () => {
 
                 const entity = ev.entity;
                 expect(entity).toBeInstanceOf(clientSession.MassiveFields);
-                expect(entity.value.id).toEqual(123n);
+                expect(entity.value.id).toEqual(BigInt(123));
                 expect(entity.value.g).toEqual(420);
                 resolve();
             });
 
-            void serverSession.$session.pushEntity(new serverSession.MassiveFields({ id: 123n, g: 420 }) as ValuedEntity);
+            void serverSession.$session.pushEntity(new serverSession.MassiveFields({ id: BigInt(123), g: 420 }) as ValuedEntity);
         });
     });
 });

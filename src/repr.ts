@@ -84,7 +84,7 @@ export class BigInteger extends DataRepr<bigint> {
         let value = BigInt(0);
         const data = await stream.read(this.size);
         for(let i = 0; i < this.size; i++)
-            value |= BigInt(data[i]) << ((BigInt(this.size) - BigInt(i) - 1n) * 8n);
+            value |= BigInt(data[i]) << ((BigInt(this.size) - BigInt(i) - BigInt(1)) * BigInt(8));
         return value;
     }
 

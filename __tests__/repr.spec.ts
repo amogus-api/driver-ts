@@ -29,9 +29,9 @@ describe("Atomic data type representation", () => {
         const repr = new amogus.repr.BigInteger(16);
 
         const values = [
-            1n << 80n,
-            1n << 90n,
-            1n << 100n,
+            BigInt(1) << BigInt(80),
+            BigInt(1) << BigInt(90),
+            BigInt(1) << BigInt(100),
         ];
         for(const val of values) {
             await repr.write(a, val);

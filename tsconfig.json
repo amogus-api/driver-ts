@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "es2020",
+        "target": "es2015",
         "module": "esnext",
         "sourceMap": true,
         "strict": true,
@@ -15,7 +15,7 @@
         "declaration": true,
         "esModuleInterop": true,
         "downlevelIteration": true,
-        "disableSizeLimit": true
+        "disableSizeLimit": true,
     },
     "include": ["src", "__tests__"],
     "exclude": ["node_modules", "lib"]
