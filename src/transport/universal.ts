@@ -1,8 +1,8 @@
 // Platform-agnostic transport layer implementations
 
-import { Duplex } from "../common";
-import { SpecSpace, SpecSpaceGen } from "../things";
-import { Session } from "../session";
+import { Duplex } from "../index";
+import { SpecSpace, SpecSpaceGen } from "../index";
+import { Session } from "../index";
 
 class DummyLink extends Duplex {
     other!: DummyLink;

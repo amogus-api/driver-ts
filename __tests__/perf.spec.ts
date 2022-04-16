@@ -1,8 +1,9 @@
 import * as amogus from "../src/index";
+import { createDummyPair } from "../src/transport/universal";
 import * as api from "./entity_output/ts/index";
 
 describe("Performance testing", () => {
-    const { client, server } = amogus.transport.universal.createDummyPair<ReturnType<typeof api.$specSpace>>(api.$specSpace);
+    const { client, server } = createDummyPair<ReturnType<typeof api.$specSpace>>(api.$specSpace);
     const clientSession = api.$bind(client);
     const serverSession = new amogus.Server(server, { });
 

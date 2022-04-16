@@ -1,9 +1,10 @@
 import * as amogus from "../src/index";
+import { createDummyPair } from "../src/transport/universal";
 import * as api from "./globalMethod_output/ts/index";
 
 describe("Global method invocation", () => {
     let serverAskCaptcha = false;
-    const { client, server } = amogus.transport.universal.createDummyPair(api.$specSpace);
+    const { client, server } = createDummyPair(api.$specSpace);
     const clientSession = api.$bind(client);
 
     // server transaction listener
@@ -19,12 +20,12 @@ describe("Global method invocation", () => {
             // ask captcha and compare solution
             const { code } = await method.confirm(new api.Captcha(), { url: "https://example.com/amogus.png" });
             if(code === "amogus")
-                await method.return({ str: `${method.params!.str} return` });
+                await method.return({ str: `${method.params.str} return` });
             else
                 await method.error(api.ErrorCode.validation_failed, "Invalid captcha");
         } else {
             // send a response
-            await method.return({ str: `${method.params!.str} return` });
+            await method.return({ str: `${method.params.str} return` });
         }
     });
 

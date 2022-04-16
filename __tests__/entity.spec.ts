@@ -1,9 +1,10 @@
 import * as amogus from "../src/index";
 import { ValuedEntity } from "../src/things";
+import { createDummyPair } from "../src/transport/universal";
 import * as api from "./entity_output/ts/index";
 
 describe("Entity method invocation", () => {
-    const { client, server } = amogus.transport.universal.createDummyPair(api.$specSpace);
+    const { client, server } = createDummyPair(api.$specSpace);
     const clientSession = api.$bind(client);
     const serverSession = api.$bind(server);
 

@@ -5,10 +5,3 @@ export * as segment from "./segment";
 export * from "./serial";
 export * from "./server";
 export * from "./session";
-
-import * as node from "./transport/node";
-import * as universal from "./transport/universal";
-export const transport = {
-    node,
-    universal,
-};

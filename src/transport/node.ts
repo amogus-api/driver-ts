@@ -1,8 +1,8 @@
 // Transport layer implementations for Node.JS
 
-import { Duplex } from "../common";
-import { SpecSpace, SpecSpaceGen } from "../things";
-import { Session } from "../session";
+import { Duplex } from "../index";
+import { SpecSpace, SpecSpaceGen } from "../index";
+import { Session } from "../index";
 import * as tls from "tls";
 
 class TlsStream extends Duplex {

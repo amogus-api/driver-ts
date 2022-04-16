@@ -1,9 +1,10 @@
 import * as amogus from "../src/index";
+import { createDummyPair } from "../src/transport/universal";
 import * as api from "./entity_output/ts/index";
 
 describe("Library errors", () => {
     type Spec = ReturnType<typeof api.$specSpace>;
-    const { client } = amogus.transport.universal.createDummyPair<Spec>(api.$specSpace);
+    const { client } = createDummyPair<Spec>(api.$specSpace);
     const session = api.$bind(client);
 
     test("call pushEntity() on the client", async () => {
