@@ -1,6 +1,6 @@
 {
   "name": "amogus-driver",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "AMOGUS wire protocol implementation for TypeScript",
   "main": "dist/index.js",
   "scripts": {
@@ -14,7 +14,7 @@
     "pub": "pnpm build && pnpm publish"
   },
   "files": [
-    "lib",
+    "dist",
     "transport",
     "package.json"
   ],
