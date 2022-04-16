@@ -89,11 +89,11 @@ describe("Atomic data type representation", () => {
         const repr = new amogus.repr.Bin();
 
         const values = [
-            Buffer.from([0, 1]),
-            Buffer.from([1, 2]),
-            Buffer.from([123, 231]),
-            Buffer.from([123, 231, 76]),
-            Buffer.from([123, 231, 76, 53]),
+            Uint8Array.from([0, 1]),
+            Uint8Array.from([1, 2]),
+            Uint8Array.from([123, 231]),
+            Uint8Array.from([123, 231, 76]),
+            Uint8Array.from([123, 231, 76, 53]),
         ];
         for(const val of values) {
             await repr.write(a, val);

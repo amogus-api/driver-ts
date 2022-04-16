@@ -9,11 +9,11 @@ export function rangeCheck(rng: range, val: number) {
 }
 
 export interface Readable {
-    read(cnt: number): Promise<Buffer>;
+    read(cnt: number): Promise<Uint8Array>;
     close(): Promise<void>;
 }
 export interface Writable {
-    write(data: Buffer): Promise<void | any>;
+    write(data: Uint8Array): Promise<void | any>;
     close(): Promise<void>;
 }
 export type ReadableWritable = Readable & Writable;

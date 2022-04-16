@@ -26,7 +26,7 @@ export abstract class Segment {
     }
 
     async write(stream: common.Writable) {
-        await stream.write(Buffer.from([this.transactionId]));
+        await stream.write(Uint8Array.from([this.transactionId]));
         await this.encode(stream);
     }
 
@@ -103,7 +103,7 @@ export class InvokeMethodSegment extends Segment {
         const [o, h] = array.chooseMode(this.payload.params);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (0 << 6) | modeMask;
-        await stream.write(Buffer.from([prefix]));
+        await stream.write(Uint8Array.from([prefix]));
 
         // write IDs
         let numId = this.payload.numericId;
@@ -116,9 +116,9 @@ export class InvokeMethodSegment extends Segment {
                 entNumId |= 0x80;
         }
 
-        await stream.write(Buffer.from([numId]));
+        await stream.write(Uint8Array.from([numId]));
         if(entNumId !== undefined)
-            await stream.write(Buffer.from([entNumId]));
+            await stream.write(Uint8Array.from([entNumId]));
         if(entId !== undefined)
             await new BigInteger(8).write(stream, entId);
 
@@ -162,7 +162,7 @@ export class ConfResponseSegment extends Segment {
         const [o, h] = array.chooseMode(this.payload.response);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (2 << 6) | modeMask;
-        await stream.write(Buffer.from([prefix]));
+        await stream.write(Uint8Array.from([prefix]));
 
         // write fields
         await array.write(stream, this.payload.response);
@@ -205,7 +205,7 @@ export class MethodReturnSegment extends Segment {
         const [o, h] = array.chooseMode(this.payload.returnVal);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (0 << 6) | modeMask;
-        await stream.write(Buffer.from([prefix]));
+        await stream.write(Uint8Array.from([prefix]));
 
         // write fields
         await array.write(stream, this.payload.returnVal);
@@ -229,7 +229,7 @@ export class EntityUpdateSegment extends Segment {
     }
 
     override async encode(stream: common.Writable): Promise<void> {
-        await stream.write(Buffer.from([1 << 6]));
+        await stream.write(Uint8Array.from([1 << 6]));
         const repr = new EntityRepr();
         repr.specSpace = {
             entities: { [this.payload.numericId]: this.payload as things.Entity },
@@ -274,7 +274,7 @@ export class ConfRequestSegment extends Segment {
         const [o, h] = array.chooseMode(this.payload.request);
         const modeMask = (h ? 32 : 0) | (o ? 16 : 0);
         const prefix = (2 << 6) | modeMask | this.payload.numericId;
-        await stream.write(Buffer.from([prefix]));
+        await stream.write(Uint8Array.from([prefix]));
 
         // write fields
         await array.write(stream, this.payload.request);
@@ -299,7 +299,7 @@ export class MethodErrorSegment extends Segment {
     }
 
     override async encode(stream: common.Writable): Promise<void> {
-        await stream.write(Buffer.from([3 << 6]));
+        await stream.write(Uint8Array.from([3 << 6]));
         await new Int(2).write(stream, this.payload.code);
         await new Str().write(stream, this.payload.msg);
     }

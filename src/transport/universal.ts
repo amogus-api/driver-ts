@@ -6,16 +6,19 @@ import { Session } from "../session";
 
 class DummyLink implements ReadableWritable {
     other!: DummyLink;
-    private readBuf = Buffer.alloc(0);
-    private listeners: ((data: Buffer) => any)[] = [];
+    private readBuf = new Uint8Array(0);
+    private listeners: ((data: Uint8Array) => any)[] = [];
 
     constructor() {
         this.listeners.push((data) => {
-            this.readBuf = Buffer.concat([this.readBuf, data]);
+            const arr = new Uint8Array(this.readBuf.length + data.length);
+            arr.set(this.readBuf);
+            arr.set(data, this.readBuf.length);
+            this.readBuf = arr;
         });
     }
 
-    read(cnt: number): Promise<Buffer> {
+    read(cnt: number): Promise<Uint8Array> {
         return new Promise((resolve, _reject) => {
             const check = () => {
                 if(this.readBuf.length >= cnt) {
@@ -28,7 +31,7 @@ class DummyLink implements ReadableWritable {
             };
             // check if data is in the buffer already
             if(!check()) {
-                const listener = (_: Buffer) => {
+                const listener = (_: Uint8Array) => {
                     if(check())
                         this.listeners = this.listeners.filter(x => x !== listener);
                 };
@@ -37,7 +40,7 @@ class DummyLink implements ReadableWritable {
         });
     }
 
-    async write(data: Buffer): Promise<void> {
+    async write(data: Uint8Array): Promise<void> {
         for(const cb of this.other.listeners)
             cb(data);
     }

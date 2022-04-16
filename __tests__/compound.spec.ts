@@ -16,7 +16,7 @@ describe("Compound", () => {
         for(let i = 0; i < 10; i++) {
             const color = randomColor();
             const buf = await serializer.serialize(color);
-            expect(buf).toEqual(Buffer.from([color.r, color.g, color.b]));
+            expect(buf).toEqual(Uint8Array.from([color.r, color.g, color.b]));
         }
     });
 

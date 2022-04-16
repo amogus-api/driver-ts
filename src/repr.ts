@@ -32,7 +32,7 @@ export class Int extends DataRepr<number> {
     }
 
     override async write(stream: Writable, value: number) {
-        const data = Buffer.alloc(this.size);
+        const data = new Uint8Array(this.size);
         for(let i = 0; i < this.size; i++) {
             data[i] = value & 0xFF;
             value >>= 8;
@@ -72,7 +72,7 @@ export class BigInteger extends DataRepr<bigint> {
     }
 
     override async write(stream: Writable, value: bigint) {
-        const data = Buffer.alloc(this.size);
+        const data = new Uint8Array(this.size);
         for(let i = 0; i < this.size; i++) {
             data[i] = Number(value & BigInt(0xFF));
             value >>= BigInt(8);
@@ -123,7 +123,9 @@ interface StrValidators {
 }
 export class Str extends DataRepr<string> {
     validators?: StrValidators;
-    private lenRepr: Int;
+    private readonly lenRepr: Int;
+    private readonly encoder = new TextEncoder();
+    private readonly decoder = new TextDecoder();
 
     constructor(validators?: StrValidators) {
         super();
@@ -132,15 +134,15 @@ export class Str extends DataRepr<string> {
     }
 
     override async write(stream: Writable, value: string) {
-        const data = Buffer.from(value);
+        const data = this.encoder.encode(value);
         await this.lenRepr.write(stream, value.length);
         await stream.write(data);
     }
 
     override async read(stream: Readable): Promise<string> {
         const len = await this.lenRepr.read(stream);
-        const utf8: Buffer = await stream.read(len);
-        return utf8.toString("utf8");
+        const utf8 = await stream.read(len);
+        return this.decoder.decode(utf8);
     }
 
     override findError(value: string) {
@@ -209,7 +211,7 @@ export class List<T> extends DataRepr<T[]> {
 interface BinValidators {
     len?: range;
 }
-export class Bin extends DataRepr<Buffer> {
+export class Bin extends DataRepr<Uint8Array> {
     validators?: BinValidators;
 
     private szRepr: Int;
@@ -220,17 +222,17 @@ export class Bin extends DataRepr<Buffer> {
         this.validators = validators;
     }
 
-    override async write(stream: Writable, value: Buffer) {
+    override async write(stream: Writable, value: Uint8Array) {
         await this.szRepr.write(stream, value.length);
         await stream.write(value);
     }
 
-    override async read(stream: Readable): Promise<Buffer> {
+    override async read(stream: Readable): Promise<Uint8Array> {
         const len = await this.szRepr.read(stream);
         return await stream.read(len);
     }
 
-    override findError(value: Buffer) {
+    override findError(value: Uint8Array) {
         if(this.validators?.len) {
             const [low, high] = this.validators.len;
             if(!rangeCheck(this.validators.len, value.length))
@@ -298,7 +300,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
             return;
         if(this.highPacking) {
             // high-packing mode
-            const sel = Buffer.alloc(this._hpSelLen);
+            const sel = new Uint8Array(this._hpSelLen);
             for(const k of optional) {
                 const id = this.spec.optional[k][0];
                 const [byte, bit] = [Math.floor(id / 8), 7 - (id % 8)];
@@ -332,7 +334,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
         // read optional fields
         if(this.hasOptional) {
             if(this.highPacking) {
-                const select: Buffer = await stream.read(this._hpSelLen);
+                const select = await stream.read(this._hpSelLen);
                 for(let i = 0; i < this._hpSelLen * 8; i++) {
                     const [byte, bit] = [Math.floor(i / 8), 7 - (i % 8)];
                     if(select[byte] & (1 << bit)) {
