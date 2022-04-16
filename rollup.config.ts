@@ -1,6 +1,7 @@
 import typescript from 'rollup-plugin-typescript2'
 
 export default [
+  // main lib
   {
     input: './src/index.ts',
     output: {
@@ -9,6 +10,8 @@ export default [
     },
     plugins: [typescript({ tsconfig: './cfg/buildconfig.json' })],
   },
+
+  // node transport
   {
     input: './src/transport/node.ts',
     output: {
@@ -18,6 +21,8 @@ export default [
     plugins: [typescript({ tsconfig: './cfg/buildconfig.node.json' })],
     external: ['tls', '../index', './universal']
   },
+
+  // universal transport
   {
     input: './src/transport/universal.ts',
     output: {
