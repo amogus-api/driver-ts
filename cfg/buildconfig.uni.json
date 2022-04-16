@@ -1,7 +1,9 @@
 {
     "extends": "../tsconfig.json",
     "compilerOptions": {
-        "outDir": "./lib"
+        "outDir": "../transport",
+        "declarationDir": "."
     },
-    "include": ["../src/transport/universal.ts"]
+    "include": ["../src/transport/universal.ts"],
+    "exclude": ["lib", "__tests__"]
 }

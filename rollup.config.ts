@@ -11,7 +11,7 @@ export default [
   {
     input: './src/transport/node.ts',
     output: {
-      file: './lib/transport/node.js',
+      file: './transport/node.js',
       format: 'cjs'
     },
     plugins: [typescript({ tsconfig: './cfg/buildconfig.node.json' })],
@@ -20,7 +20,7 @@ export default [
   {
     input: './src/transport/universal.ts',
     output: {
-      file: './lib/transport/universal.js',
+      file: './transport/universal.js',
       format: 'cjs'
     },
     plugins: [typescript({ tsconfig: './cfg/buildconfig.uni.json' })],

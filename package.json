@@ -1,11 +1,11 @@
 {
   "name": "amogus-driver",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "AMOGUS wire protocol implementation for TypeScript",
   "main": "lib/index.js",
-  "module": "lib/index.esm.js",
   "scripts": {
-    "build": "rm -rf lib && rollup -c",
+    "build": "rm -rf lib transport && rollup -c && pnpm fix-dts && tree lib transport",
+    "fix-dts": "mv transport/transport/*.d.ts transport/ && rm -r transport/transport",
     "test:sus": "susc -l ts __tests__/*.sus && sed -i 's/amogus-driver/..\\/..\\/..\\/src\\/index/g' __tests__/*_output/ts/index.ts",
     "test": "pnpm lint && pnpm test:sus && jest --coverage",
     "lint": "pnpm eslint src --ext .ts",
@@ -13,6 +13,7 @@
   },
   "files": [
     "lib",
+    "transport",
     "package.json"
   ],
   "repository": {
@@ -43,7 +44,7 @@
     "eslint-config-airbnb-typescript": "^16.1.2",
     "eslint-plugin-import": "^2.25.4",
     "jest": "^27.5.1",
-    "rollup": "^2.60.2",
+    "rollup": "^2.67.3",
     "rollup-plugin-typescript2": "^0.31.1",
     "ts-jest": "^27.1.3",
     "ts-toolbelt": "^9.6.0",
