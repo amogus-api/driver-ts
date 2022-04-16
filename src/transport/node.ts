@@ -1,18 +1,22 @@
 // Transport layer implementations for Node.JS
 
-import { ReadableWritable } from "../common";
+import { Duplex } from "../common";
 import { SpecSpace, SpecSpaceGen } from "../things";
 import { Session } from "../session";
 import * as tls from "tls";
 
-class TlsStream implements ReadableWritable {
+class TlsStream extends Duplex {
     socket: tls.TLSSocket;
     private readBuf = Buffer.alloc(0);
 
     constructor(socket: tls.TLSSocket) {
+        super();
         this.socket = socket;
         socket.on("data", (data) => {
             this.readBuf = Buffer.concat([this.readBuf, data]);
+        });
+        socket.on("close", () => {
+            this.trigger({ type: "closed" });
         });
     }
 
@@ -51,6 +55,7 @@ class TlsStream implements ReadableWritable {
 
     async close(): Promise<void> {
         this.socket.destroy();
+        this.trigger({ type: "closed" });
     }
 }
 

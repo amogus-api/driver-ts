@@ -35,9 +35,8 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
             // check rate limit
             if(method.spec.rateLimit) {
                 const [invocations, window] = method.spec.rateLimit;
-
-                // rate-limited this method before
                 if(name in this.limiter) {
+                    // rate-limited this method before
                     const duringCurWindow = this.limiter[name]!.filter(x => Date.now() - x <= window);
 
                     if(duringCurWindow.length >= invocations) {
@@ -49,6 +48,7 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
                     duringCurWindow.push(Date.now());
                     this.limiter[name] = duringCurWindow;
                 } else {
+                    // first time rate-limiting this method
                     this.limiter[name] = [Date.now()];
                 }
             }
@@ -63,6 +63,13 @@ export class Server<State, Session extends SessionType<SpecSpace>> {
             const newState = await callback(method, this.state);
             if(newState !== undefined)
                 this.state = newState;
+        });
+    }
+
+    onClose(callback: (state: State) => void) {
+        this.session.subscribe((e) => {
+            if(e.type === "close")
+                callback(this.state);
         });
     }
 }

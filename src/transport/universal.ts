@@ -1,15 +1,16 @@
 // Platform-agnostic transport layer implementations
 
-import { ReadableWritable } from "../common";
+import { Duplex } from "../common";
 import { SpecSpace, SpecSpaceGen } from "../things";
 import { Session } from "../session";
 
-class DummyLink implements ReadableWritable {
+class DummyLink extends Duplex {
     other!: DummyLink;
     private readBuf = new Uint8Array(0);
     private listeners: ((data: Uint8Array) => any)[] = [];
 
     constructor() {
+        super();
         this.listeners.push((data) => {
             const arr = new Uint8Array(this.readBuf.length + data.length);
             arr.set(this.readBuf);
@@ -46,7 +47,7 @@ class DummyLink implements ReadableWritable {
     }
 
     async close(): Promise<void> {
-        return;
+        throw new Error("Can't close a dummy link");
     }
 }
 

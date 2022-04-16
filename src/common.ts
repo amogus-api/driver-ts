@@ -8,16 +8,6 @@ export function rangeCheck(rng: range, val: number) {
     return val >= low && val <= hi;
 }
 
-export interface Readable {
-    read(cnt: number): Promise<Uint8Array>;
-    close(): Promise<void>;
-}
-export interface Writable {
-    write(data: Uint8Array): Promise<void | any>;
-    close(): Promise<void>;
-}
-export type ReadableWritable = Readable & Writable;
-
 export abstract class Cloneable {
     clone(): this {
         // @ts-expect-error it's unaware that it's a constructor
@@ -43,6 +33,21 @@ export class EventHost<Event> {
         for(const cb of this.subs)
             cb(ev);
     }
+}
+
+export type StreamEvent = { type: "closed" };
+export abstract class Readable extends EventHost<StreamEvent> {
+    abstract read(cnt: number): Promise<Uint8Array>;
+    abstract close(): Promise<void>;
+}
+export abstract class Writable extends EventHost<StreamEvent> {
+    abstract write(data: Uint8Array): Promise<void | any>;
+    abstract close(): Promise<void>;
+}
+export abstract class Duplex extends EventHost<StreamEvent> {
+    abstract read(cnt: number): Promise<Uint8Array>;
+    abstract write(data: Uint8Array): Promise<void | any>;
+    abstract close(): Promise<void>;
 }
 
 export type NotNull<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;

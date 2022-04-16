@@ -1,12 +1,13 @@
 // Handles field array (i.e. compounds) (de-)serialization into Uint8Arrays
 
-import { ReadableWritable } from "./common";
+import { Duplex } from "./common";
 import { FieldArray, FieldSpec, FieldValue } from "./repr";
 
-class Collector implements ReadableWritable {
+class Collector extends Duplex {
     data: Uint8Array;
 
     constructor(initial?: Uint8Array) {
+        super();
         this.data = initial ?? new Uint8Array(0);
     }
 
@@ -24,7 +25,7 @@ class Collector implements ReadableWritable {
     }
 
     async close(): Promise<void> {
-        // nothing to do
+        this.trigger({ type: "closed" });
     }
 }
 

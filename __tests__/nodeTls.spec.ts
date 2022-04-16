@@ -3,25 +3,27 @@ import * as amogus from "../src/index";
 import { TlsClient, TlsListener } from "../src/transport/node";
 import * as api from "./globalMethod_output/ts/index";
 
+function delay(ms: number) {
+    return new Promise((res) => setTimeout(res, ms));
+}
+
 describe("Node TLS", () => {
     test("TLS", async () => {
+        let closed = false;
         // set up a server
         const listener = new TlsListener(api.$specSpace, {
             key: fs.readFileSync("__tests__/certs/server.key"),
             cert: fs.readFileSync("__tests__/certs/server.cert"),
             port: 1234,
             rejectUnauthorized: false,
-        }, (session) => {
-            session.subscribe(async (event) => {
-                // listen to echo() invocations
-                if(!(event instanceof amogus.InvocationEvent))
-                    return;
-                const method = event.method;
-                if(!(method instanceof api.Echo))
-                    return;
+        }, (session: amogus.Session<ReturnType<typeof api.$specSpace>>) => {
+            const server = new amogus.Server(session, null);
 
-                // return a response
-                await method.return({ str: `${method.params!.str} return` });
+            server.onInvocation("echo", async (method, _state) => {
+                await method.return({ str: `${method.params.str} return` });
+            });
+            server.onClose((_state) => {
+                closed = true;
             });
         });
 
@@ -37,7 +39,9 @@ describe("Node TLS", () => {
         expect(result.str).toBe("hello return");
 
         // close
-        await listener.close();
         await client.$close();
+        await delay(200);
+        expect(closed).toBe(true);
+        await listener.close();
     });
 });

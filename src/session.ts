@@ -93,17 +93,18 @@ export class InvocationEvent<M extends NotNull<things.Method, "params">> {
 
 export type TranSessionEvent = { type: "new_transaction", transaction: Transaction };
 export type EntityEvent = { type: "entity_update", entity: things.ValuedEntity };
-export type SessionEvent = TranSessionEvent | InvocationEvent<any> | EntityEvent;
+export type CloseEvent = { type: "close" };
+export type SessionEvent = TranSessionEvent | InvocationEvent<any> | EntityEvent | CloseEvent;
 
 export abstract class Session<Spec extends things.SpecSpace = things.SpecSpace> extends common.EventHost<SessionEvent> {
     specSpace: Spec;
     transactions: Transaction[] = [];
 
-    protected stream: common.ReadableWritable;
+    protected stream: common.Duplex;
     private self: common.PeerType;
     private active = false;
 
-    constructor(specSpace: (session: Session<Spec>) => Spec, stream: common.ReadableWritable, self: common.PeerType) {
+    constructor(specSpace: (session: Session<Spec>) => Spec, stream: common.Duplex, self: common.PeerType) {
         super();
         const space = specSpace(this);
 
@@ -112,6 +113,13 @@ export abstract class Session<Spec extends things.SpecSpace = things.SpecSpace> 
         this.stream = stream;
         this.self = self;
         this.run();
+
+        // destroy ourselves when underlying stream closes
+        this.stream.subscribe(async (e) => {
+            if(e.type !== "closed" || !this.active)
+                return;
+            await this.stop();
+        });
     }
 
     private async processTran(event: SessionEvent) {
@@ -137,6 +145,9 @@ export abstract class Session<Spec extends things.SpecSpace = things.SpecSpace> 
     }
 
     async stop() {
+        if(!this.active)
+            return;
+        this.trigger({ type: "close" });
         this.active = false;
         await this.stream.close();
     }
