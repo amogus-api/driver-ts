@@ -7,9 +7,21 @@ describe("Entity method invocation", () => {
     const clientSession = api.$bind(client);
     const serverSession = api.$bind(server);
 
-    const objectStore: { [id: number]: ValuedEntity } = {
-        123: new serverSession.MassiveFields({ id: 123, a: 300 }) as ValuedEntity<api.MassiveFields>,
-    };
+    let objectStore: { id: bigint, val: ValuedEntity }[] = [{
+        id: 123n,
+        val: new serverSession.MassiveFields({ id: 123n, a: 300 }) as ValuedEntity<api.MassiveFields>,
+    }];
+
+    function storeGet(id: bigint) {
+        return objectStore.find(o => o.id === id)?.val;
+    }
+    function storeSet(id: bigint, val: ValuedEntity) {
+        objectStore = objectStore.filter(o => o.id !== id);
+        objectStore.push({ id, val });
+    }
+    function storeHas(id: bigint) {
+        return objectStore.findIndex(o => o.id === id) !== -1;
+    }
 
     // server transaction listener
     server.subscribe(async (event) => {
@@ -20,15 +32,15 @@ describe("Entity method invocation", () => {
                 await method.return({ str: `${method.params.str} return` });
 
             else if(method instanceof api.Test_DynamicEcho)
-                await method.return({ str: `${method.params.str} return (eid ${method.entityId})` });
+                await method.return({ str: `${method.params.str} return (eid ${method.entityId!.toString()})` });
 
             else if(method instanceof api.MassiveFields_Get) {
                 const id = method.params.id;
-                if(!(id in objectStore)) {
+                if(!storeHas(id)) {
                     await method.error(api.ErrorCode.invalid_id, `no such entity ${id}`);
                     return;
                 }
-                const entity = objectStore[id] as ValuedEntity<api.MassiveFields>;
+                const entity = storeGet(id)! as ValuedEntity<api.MassiveFields>;
                 await method.return({ entity });
             }
 
@@ -36,10 +48,13 @@ describe("Entity method invocation", () => {
                 const entity = method.params.entity;
                 if(!(entity instanceof api.MassiveFields))
                     return;
-                if(!(entity.value.id in objectStore))
+                if(!storeHas(entity.id!))
                     return;
 
-                objectStore[entity.value.id].value = { ...objectStore[entity.value.id].value, ...entity.value };
+                storeSet(entity.id!, new serverSession.MassiveFields({
+                    ...storeGet(entity.id!)?.value,
+                    ...entity.value,
+                }) as ValuedEntity<api.MassiveFields>);
                 await method.return({});
             }
         }
@@ -51,27 +66,27 @@ describe("Entity method invocation", () => {
     });
 
     test("dynamic entity method", async () => {
-        const test = new clientSession.Test({ id: 123 });
+        const test = new clientSession.Test({ id: 123n });
         const { str } = await test.dynamicEcho({ str: "hi" });
         expect(str).toEqual("hi return (eid 123)");
     });
 
     test("get entity", async () => {
-        const entity = await clientSession.MassiveFields.$get(123);
-        expect(entity.value.id).toEqual(123);
+        const entity = await clientSession.MassiveFields.$get(123n);
+        expect(entity.value.id).toEqual(123n);
     });
 
     test("push entity update", async () => {
-        let entity = await clientSession.MassiveFields.$get(123);
+        let entity = await clientSession.MassiveFields.$get(123n);
         await entity.$update({ a: 400, b: 300 });
-        entity = (await clientSession.MassiveFields.$get(123));
-        expect(entity.value).toEqual({ id: 123, a: 400, b: 300 });
+        entity = (await clientSession.MassiveFields.$get(123n));
+        expect(entity.value).toEqual({ id: 123n, a: 400, b: 300 });
     });
 
     test("get field via top-level getter", async () => {
-        let entity = await clientSession.MassiveFields.$get(123);
+        const entity = await clientSession.MassiveFields.$get(123n);
         await entity.$update({ a: 300, f: 500 });
-        expect(entity.id).toEqual(123);
+        expect(entity.id).toEqual(123n);
         expect(entity.a).toEqual(300);
         expect(entity.f).toEqual(500);
     });
@@ -84,12 +99,12 @@ describe("Entity method invocation", () => {
 
                 const entity = ev.entity;
                 expect(entity).toBeInstanceOf(clientSession.MassiveFields);
-                expect(entity.value.id).toEqual(123);
+                expect(entity.value.id).toEqual(123n);
                 expect(entity.value.g).toEqual(420);
                 resolve();
             });
 
-            void serverSession.$session.pushEntity(new serverSession.MassiveFields({ id: 123, g: 420 }) as ValuedEntity);
+            void serverSession.$session.pushEntity(new serverSession.MassiveFields({ id: 123n, g: 420 }) as ValuedEntity);
         });
     });
 });

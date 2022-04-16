@@ -44,7 +44,7 @@ export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Clone
         await this.update({ entity: entity as ValuedEntity });
     }
 
-    static async $get(_id: number): Promise<ValuedEntity> {
+    static async $get(_id: bigint): Promise<ValuedEntity> {
         throw new Error("Not implemented");
     }
 }
@@ -67,7 +67,7 @@ export abstract class Method<Spec extends MethodSpec = MethodSpec> extends Clone
 
     params?: FieldValue<Spec["params"]>;
     returnVal?: FieldValue<Spec["returns"]>;
-    entityId?: number;
+    entityId?: bigint;
 
     sessionEvent?: InvocationEvent<NotNull<Method<Spec>, "params">>;
 

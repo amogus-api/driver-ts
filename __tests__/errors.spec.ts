@@ -8,7 +8,7 @@ describe("Library errors", () => {
 
     test("call pushEntity() on the client", async () => {
         try {
-            await client.pushEntity(new session.Test({ id: 123 }) as amogus.ValuedEntity);
+            await client.pushEntity(new session.Test({ id: 123n }) as amogus.ValuedEntity);
         } catch(e) {
             expect((e as Error).message).toBe("pushEntity can only be called on the server");
         }
@@ -40,6 +40,15 @@ describe("Library errors", () => {
         }
         try { await method.confirm(new api.Silly(), { }); } catch(ex) {
             expect((ex as Error).message).toBe("No event to respond to");
+        }
+    });
+
+    test("create Int(8)", () => {
+        try {
+            new amogus.repr.Int(8);
+            fail("Expected error");
+        } catch(ex) {
+            expect((ex as Error).message).toBe("`Int`s are limited to 6 bytes due to JavaScript's `Number`s being limited to 53 bits. Consider using a `BigInteger` representation.");
         }
     });
 });

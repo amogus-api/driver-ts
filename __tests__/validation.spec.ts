@@ -16,6 +16,25 @@ describe("Atomic data type validation", () => {
         }
     });
 
+    test("BigInt(16)[val]", async () => {
+        const [a, b] = createDummyLinks();
+        const repr = new amogus.repr.BigInteger(16, { val: [10n, 100n] });
+
+        const values = [
+            5n, 10n, 50n, 123n, 255n,
+            1n << 80n,
+            1n << 90n,
+            1n << 100n,
+        ];
+        for(const val of values) {
+            await repr.write(a, val);
+            const value = await repr.read(b);
+            expect(value).toEqual(val);
+            const valid = val >= 10 && val <= 100;
+            expect(repr.findError(value) === null).toEqual(valid);
+        }
+    });
+
     test("Str[len]", async () => {
         const [a, b] = createDummyLinks();
         const repr = new amogus.repr.Str({ len: [2, 7] });

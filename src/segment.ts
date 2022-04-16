@@ -2,7 +2,7 @@
 
 import * as common from "./common";
 import * as things from "./things";
-import { Entity as EntityRepr, FieldArray, Int, Str } from "./repr";
+import { Entity as EntityRepr, FieldArray, Int, BigInteger, Str } from "./repr";
 import { Session } from "./session";
 
 export abstract class Segment {
@@ -66,12 +66,12 @@ export class InvokeMethodSegment extends Segment {
         // read IDs
         let numericId = (await stream.read(1))[0];
         let numericEntityId: number|undefined = undefined; // the signature of an entity type
-        let entityId: number|undefined = undefined; // the ID used to reference an entity
+        let entityId: bigint|undefined = undefined; // the ID used to reference an entity
 
         if(numericId & 0x80) { // highest bit set
             numericEntityId = (await stream.read(1))[0];
             if(numericEntityId & 0x80) {
-                entityId = await new Int(8).read(stream);
+                entityId = await new BigInteger(8).read(stream);
                 numericEntityId &= ~0x80;
                 numericId &= ~0x80; // clear highest bit to indicate a dynamic method
             }
@@ -120,7 +120,7 @@ export class InvokeMethodSegment extends Segment {
         if(entNumId !== undefined)
             await stream.write(Buffer.from([entNumId]));
         if(entId !== undefined)
-            await new Int(8).write(stream, entId);
+            await new BigInteger(8).write(stream, entId);
 
         // write fields
         await array.write(stream, this.payload.params);

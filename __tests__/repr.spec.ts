@@ -24,6 +24,21 @@ describe("Atomic data type representation", () => {
         }
     });
 
+    test("BigInt(16)", async () => {
+        const [a, b] = createDummyLinks();
+        const repr = new amogus.repr.BigInteger(16);
+
+        const values = [
+            1n << 80n,
+            1n << 90n,
+            1n << 100n,
+        ];
+        for(const val of values) {
+            await repr.write(a, val);
+            expect(await repr.read(b)).toEqual(val);
+        }
+    });
+
     test("Str()", async () => {
         const [a, b] = createDummyLinks();
         const repr = new amogus.repr.Str();

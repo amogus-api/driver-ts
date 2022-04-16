@@ -7,5 +7,6 @@ module.exports = {
         "src/**/*.ts",
         "!**/node_modules/**",
         "!__tests__/*_output"
-    ]
+    ],
+    maxWorkers: 1
 };

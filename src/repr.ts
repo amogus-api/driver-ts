@@ -24,6 +24,8 @@ export class Int extends DataRepr<number> {
     validators?: IntValidators;
 
     constructor(size: number, validators?: IntValidators) {
+        if(size > 6)
+            throw new Error("`Int`s are limited to 6 bytes due to JavaScript's `Number`s being limited to 53 bits. Consider using a `BigInteger` representation.");
         super();
         this.size = size;
         this.validators = validators;
@@ -51,6 +53,46 @@ export class Int extends DataRepr<number> {
             const [low, high] = this.validators.val;
             if(value < low || value > high)
                 return `Int[val]: "${value}" is out of range ${low}..${high}`;
+        }
+        return null;
+    }
+}
+
+interface BigIntValidators {
+    val?: [bigint, bigint];
+}
+export class BigInteger extends DataRepr<bigint> {
+    size: number;
+    validators?: BigIntValidators;
+
+    constructor(size: number, validators?: BigIntValidators) {
+        super();
+        this.size = size;
+        this.validators = validators;
+    }
+
+    override async write(stream: Writable, value: bigint) {
+        const data = Buffer.alloc(this.size);
+        for(let i = 0; i < this.size; i++) {
+            data[i] = Number(value & BigInt(0xFF));
+            value >>= BigInt(8);
+        }
+        await stream.write(data.reverse());
+    }
+
+    override async read(stream: Readable): Promise<bigint> {
+        let value = BigInt(0);
+        const data = await stream.read(this.size);
+        for(let i = 0; i < this.size; i++)
+            value |= BigInt(data[i]) << ((BigInt(this.size) - BigInt(i) - 1n) * 8n);
+        return value;
+    }
+
+    override findError(value: bigint) {
+        if(this.validators?.val) {
+            const [low, high] = this.validators.val;
+            if(value < low || value > high)
+                return `BigInt[val]: "${value}" is out of range ${low}..${high}`;
         }
         return null;
     }
