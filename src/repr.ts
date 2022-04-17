@@ -61,6 +61,8 @@ export class Int extends DataRepr<number> {
 interface BigIntValidators {
     val?: [bigint, bigint];
 }
+// polyfill-friendly BigInt serialization
+export let bigIntPolyfillMode: "none"|"0x"|"radix" = "none"; // eslint-disable-line prefer-const
 export class BigInteger extends DataRepr<bigint> {
     size: number;
     validators?: BigIntValidators;
@@ -73,19 +75,50 @@ export class BigInteger extends DataRepr<bigint> {
 
     override async write(stream: Writable, value: bigint) {
         const data = new Uint8Array(this.size);
-        for(let i = 0; i < this.size; i++) {
-            data[i] = Number(value & BigInt(0xFF));
-            value /= BigInt(256); // >>= 8 had issues with "bigint-polyfill"
+        if(bigIntPolyfillMode === "none") {
+            // snip bytes off
+            for(let i = 0; i < this.size; i++) {
+                data[i] = Number(value & BigInt(0xFF));
+                value >>= BigInt(8);
+            }
+
+            data.reverse();
+        } else {
+            // convert value to hex and write from left to right
+            const valStr = value.toString(16).padStart(this.size * 2, "0");
+
+            for(let i = 0; i < this.size; i++)
+                data[i] = parseInt(valStr.slice(i * 2, (i + 1) * 2), 16);
         }
-        await stream.write(data.reverse());
+        await stream.write(data);
     }
 
     override async read(stream: Readable): Promise<bigint> {
-        let value = BigInt(0);
         const data = await stream.read(this.size);
-        for(let i = 0; i < this.size; i++)
-            value |= BigInt(data[i]) << BigInt((this.size - i - 1) * 8);
-        return value;
+        if(bigIntPolyfillMode === "none") {
+            // fill bytes in
+            data.reverse();
+            let value = BigInt(0);
+
+            for(let i = 0; i < this.size; i++)
+                value |= BigInt(data[i]) << BigInt(i * 8);
+
+            return value;
+        } else {
+            // start with 0x or nothing depending on mode
+            let valStr = bigIntPolyfillMode === "0x" ? "0x" : "";
+
+            // fill data in as hex
+            for(let i = 0; i < this.size; i++)
+                valStr += data[i].toString(16).padStart(2, "0");
+
+            // convert hex string to bigint
+            if(bigIntPolyfillMode === "radix") {
+                // @ts-expect-error non-standard!
+                return BigInt(valStr, 16);
+            }
+            return BigInt(valStr);
+        }
     }
 
     override findError(value: bigint) {

@@ -8,8 +8,25 @@
 
 # AMOGUS wire protocol implementation
 This library provides an AMOGUS implementation for JS and TS in all major environments (browser, node, etc.). Install it with:
-```
+```console
 npm i amogus-driver
+```
+**If you're using a BigInt polyfill**, add this as close to the entry as possible:
+```typescript
+import * as amogus from "amogus-driver";
+
+// if using a polyfill that provides a BigInt(string, radix) constructor
+// (e.g. 'big-integer', 'bigint-polyfill'):
+amogus.repr.bigIntPolyfillMode = "radix";
+
+// if using a polyfill that supports BigInt("0x<data>"):
+amogus.repr.bigIntPolyfillMode = "0x";
+
+// if not using a polyfill or using a polyfill that implements
+// operators like native BigInts (haven't seen one of those in
+// the wild)
+amogus.repr.bigIntPolyfillMode = "none";
+// OR don't do anything, this is the default value
 ```
 
 # How do I use it??

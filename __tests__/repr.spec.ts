@@ -24,7 +24,7 @@ describe("Atomic data type representation", () => {
         }
     });
 
-    test("BigInt(16)", async () => {
+    test("BigInt(16) (no polyfill)", async () => {
         const [a, b] = createDummyLinks();
         const repr = new amogus.repr.BigInteger(16);
 
@@ -37,6 +37,57 @@ describe("Atomic data type representation", () => {
             await repr.write(a, val);
             expect(await repr.read(b)).toEqual(val);
         }
+    });
+
+    test("BigInt(16) (0x polyfill)", async () => {
+        const [a, b] = createDummyLinks();
+        amogus.repr.bigIntPolyfillMode = "0x";
+        const repr = new amogus.repr.BigInteger(16);
+
+        // emulate polyfill
+        const source = BigInt;
+        // @ts-expect-error polyfills break standards
+        global.BigInt = (x: string) => source(x);
+
+        const values = [
+            BigInt(1) << BigInt(80),
+            BigInt(1) << BigInt(90),
+            BigInt(1) << BigInt(100),
+        ];
+        for(const val of values) {
+            await repr.write(a, val);
+            expect(await repr.read(b)).toEqual(val);
+        }
+
+        global.BigInt = source;
+        amogus.repr.bigIntPolyfillMode = "none";
+    });
+
+    test("BigInt(16) (radix polyfill)", async () => {
+        const [a, b] = createDummyLinks();
+        amogus.repr.bigIntPolyfillMode = "radix";
+        const repr = new amogus.repr.BigInteger(16);
+
+        // emulate polyfill
+        const source = BigInt;
+        // @ts-expect-error polyfills break standards
+        global.BigInt = (x: string, n?: number) => {
+            expect([16, undefined]).toContain(n);
+            return n ? source("0x" + x) : source(x);
+        };
+
+        const values = [
+            BigInt(1) << BigInt(80),
+            BigInt(1) << BigInt(90),
+            BigInt(1) << BigInt(100),
+        ];
+        for(const val of values) {
+            await repr.write(a, val);
+            expect(await repr.read(b)).toEqual(val);
+        }
+
+        global.BigInt = source;
+        amogus.repr.bigIntPolyfillMode = "none";
     });
 
     test("Str()", async () => {
