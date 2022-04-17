@@ -330,8 +330,12 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
 
         // write prefix for optional fields
         const optional = Object.entries(value)
+            // get optional defined fields
             .filter(([k, v]) => (k in this.spec.optional) && (v !== undefined))
-            .map(([k, _]) => k);
+            // extract keys
+            .map(([k, _v]) => k)
+            // sort by opt(n)
+            .sort((a, b) => this.spec.optional[a][0] - this.spec.optional[b][0]);
         if(optional.length === 0)
             return;
         if(this.highPacking) {
