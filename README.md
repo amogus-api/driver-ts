@@ -17,15 +17,15 @@ import * as amogus from "amogus-driver";
 
 // if using a polyfill that provides a BigInt(string, radix) constructor
 // (e.g. 'big-integer', 'bigint-polyfill'):
-amogus.repr.bigIntPolyfillMode = "radix";
+amogus.repr.BigInteger.polyfillMode = "radix";
 
 // if using a polyfill that supports BigInt("0x<data>"):
-amogus.repr.bigIntPolyfillMode = "0x";
+amogus.repr.BigInteger.polyfillMode = "0x";
 
 // if not using a polyfill or using a polyfill that implements
 // operators like native BigInts (haven't seen one of those in
-// the wild)
-amogus.repr.bigIntPolyfillMode = "none";
+// the wild):
+amogus.repr.BigInteger.polyfillMode = "none";
 // OR don't do anything, this is the default value
 ```
 

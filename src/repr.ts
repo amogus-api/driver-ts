@@ -62,10 +62,11 @@ interface BigIntValidators {
     val?: [bigint, bigint];
 }
 // polyfill-friendly BigInt serialization
-export let bigIntPolyfillMode: "none"|"0x"|"radix" = "none"; // eslint-disable-line prefer-const
 export class BigInteger extends DataRepr<bigint> {
     size: number;
     validators?: BigIntValidators;
+
+    static polyfillMode: "none"|"0x"|"radix" = "none";
 
     constructor(size: number, validators?: BigIntValidators) {
         super();
@@ -75,7 +76,7 @@ export class BigInteger extends DataRepr<bigint> {
 
     override async write(stream: Writable, value: bigint) {
         const data = new Uint8Array(this.size);
-        if(bigIntPolyfillMode === "none") {
+        if(BigInteger.polyfillMode === "none") {
             // snip bytes off
             for(let i = 0; i < this.size; i++) {
                 data[i] = Number(value & BigInt(0xFF));
@@ -95,7 +96,7 @@ export class BigInteger extends DataRepr<bigint> {
 
     override async read(stream: Readable): Promise<bigint> {
         const data = await stream.read(this.size);
-        if(bigIntPolyfillMode === "none") {
+        if(BigInteger.polyfillMode === "none") {
             // fill bytes in
             data.reverse();
             let value = BigInt(0);
@@ -106,14 +107,14 @@ export class BigInteger extends DataRepr<bigint> {
             return value;
         } else {
             // start with 0x or nothing depending on mode
-            let valStr = bigIntPolyfillMode === "0x" ? "0x" : "";
+            let valStr = BigInteger.polyfillMode === "0x" ? "0x" : "";
 
             // fill data in as hex
             for(let i = 0; i < this.size; i++)
                 valStr += data[i].toString(16).padStart(2, "0");
 
             // convert hex string to bigint
-            if(bigIntPolyfillMode === "radix") {
+            if(BigInteger.polyfillMode === "radix") {
                 // @ts-expect-error non-standard!
                 return BigInt(valStr, 16);
             }

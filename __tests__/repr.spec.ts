@@ -41,7 +41,7 @@ describe("Atomic data type representation", () => {
 
     test("BigInt(16) (0x polyfill)", async () => {
         const [a, b] = createDummyLinks();
-        amogus.repr.bigIntPolyfillMode = "0x";
+        amogus.repr.BigInteger.polyfillMode = "0x";
         const repr = new amogus.repr.BigInteger(16);
 
         // emulate polyfill
@@ -60,12 +60,12 @@ describe("Atomic data type representation", () => {
         }
 
         global.BigInt = source;
-        amogus.repr.bigIntPolyfillMode = "none";
+        amogus.repr.BigInteger.polyfillMode = "none";
     });
 
     test("BigInt(16) (radix polyfill)", async () => {
         const [a, b] = createDummyLinks();
-        amogus.repr.bigIntPolyfillMode = "radix";
+        amogus.repr.BigInteger.polyfillMode = "radix";
         const repr = new amogus.repr.BigInteger(16);
 
         // emulate polyfill
@@ -87,7 +87,7 @@ describe("Atomic data type representation", () => {
         }
 
         global.BigInt = source;
-        amogus.repr.bigIntPolyfillMode = "none";
+        amogus.repr.BigInteger.polyfillMode = "none";
     });
 
     test("Str()", async () => {
