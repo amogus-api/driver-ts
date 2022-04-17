@@ -8,9 +8,6 @@ import { SpecSpace, AllMethods } from "./things";
 type MethodByName<M extends AllMethods<SpecSpace>, N extends M["spec"]["name"]> =
     Extract<M, { spec: { name: N } }>;
 
-// @ts-expect-error yikes! shouldn't have to do this!!
-BigInt.prototype.toJSON = function() { return this.toString(); };
-
 export class Server<State extends object, Session extends SessionType<SpecSpace>> {
     debug: boolean;
 

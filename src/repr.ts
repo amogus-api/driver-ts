@@ -75,7 +75,7 @@ export class BigInteger extends DataRepr<bigint> {
         const data = new Uint8Array(this.size);
         for(let i = 0; i < this.size; i++) {
             data[i] = Number(value & BigInt(0xFF));
-            value >>= BigInt(8);
+            value /= BigInt(256); // >>= 8 had issues with "bigint-polyfill"
         }
         await stream.write(data.reverse());
     }
@@ -84,7 +84,7 @@ export class BigInteger extends DataRepr<bigint> {
         let value = BigInt(0);
         const data = await stream.read(this.size);
         for(let i = 0; i < this.size; i++)
-            value |= BigInt(data[i]) << ((BigInt(this.size) - BigInt(i) - BigInt(1)) * BigInt(8));
+            value |= BigInt(data[i]) << BigInt((this.size - i - 1) * 8);
         return value;
     }
 
