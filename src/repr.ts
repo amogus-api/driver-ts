@@ -329,8 +329,10 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
             await this.spec.required[k].write(stream, value[k]);
 
         // write prefix for optional fields
-        const optional = Object.keys(value).filter(k => k in this.spec.optional);
-        if(optional.length == 0)
+        const optional = Object.entries(value)
+            .filter(([k, v]) => (k in this.spec.optional) && (v !== undefined))
+            .map(([k, _]) => k);
+        if(optional.length === 0)
             return;
         if(this.highPacking) {
             // high-packing mode
@@ -347,7 +349,7 @@ export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> 
 
         // write optional fields
         for(const k of optional) {
-            if(!(k in value))
+            if(value[k] === undefined)
                 continue;
             if(!this.highPacking)
                 await new Int(1).write(stream, this.spec.optional[k][0]);
