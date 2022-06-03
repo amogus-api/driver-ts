@@ -39,12 +39,11 @@ export class Server<State extends object, Session extends SessionType<SpecSpace>
         if(!this.debug)
             return;
 
-        let template = `[server event: ${tag}]\nstate = ${JSON.stringify(this.state, null, 4)}`;
+        console.log(`[server event: ${tag}]`);
+        console.log("state =", this.state);
         if(data)
-            template += `\ndata = ${typeof data === "string" ? data : JSON.stringify(data, null, 4)}`;
-        template += "\n";
-
-        console.log(template);
+            console.log("data =", data);
+        console.log();
     }
 
     onInvocation<M extends AllMethods<Session["specSpace"]>, N extends M["spec"]["name"]>(
