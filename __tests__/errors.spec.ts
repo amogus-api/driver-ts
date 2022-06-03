@@ -49,7 +49,7 @@ describe("Library errors", () => {
             new amogus.repr.Int(8);
             fail("Expected error");
         } catch(ex) {
-            expect((ex as Error).message).toBe("`Int`s are limited to 6 bytes due to JavaScript's `Number`s being limited to 53 bits. Consider using a `BigInteger` representation.");
+            expect((ex as Error).message).toBe("`Int`s are limited to 4 bytes due to JavaScript Number precision limitations. Consider using a `BigInteger` repr instead.");
         }
     });
 });

@@ -24,8 +24,8 @@ export class Int extends DataRepr<number> {
     validators?: IntValidators;
 
     constructor(size: number, validators?: IntValidators) {
-        if(size > 6)
-            throw new Error("`Int`s are limited to 6 bytes due to JavaScript's `Number`s being limited to 53 bits. Consider using a `BigInteger` representation.");
+        if(size > 4)
+            throw new Error("`Int`s are limited to 4 bytes due to JavaScript Number precision limitations. Consider using a `BigInteger` repr instead.");
         super();
         this.size = size;
         this.validators = validators;
@@ -194,10 +194,17 @@ export class Str extends DataRepr<string> {
     }
 }
 
+// Full list or partial list update
+export type ListOrUpdate<T> =
+    T[] | (T[] & ({ partial: "append" | "prepend", count: number }
+    | { partial: "insert", index: number, count: number }
+    | { partial: "remove", index: number, count: number }));
+const partialModes = ["append", "prepend", "insert", "remove"];
+
 interface ListValidators {
     len?: range;
 }
-export class List<T> extends DataRepr<T[]> {
+export class List<T> extends DataRepr<ListOrUpdate<T>> {
     itemRepr: DataRepr<T>;
     validators?: ListValidators;
 
@@ -210,18 +217,88 @@ export class List<T> extends DataRepr<T[]> {
         this.validators = validators;
     }
 
-    override async write(stream: Writable, value: T[]) {
-        await this.szRepr.write(stream, value.length);
-        for(const item of value)
-            await this.itemRepr.write(stream, item);
+    override async write(stream: Writable, value: ListOrUpdate<T>) {
+        if("partial" in value) {
+            const partial = value.partial;
+            const modeId = partialModes.indexOf(partial);
+
+            // write mode byte and count
+            await new Int(1).write(stream, 0xF0 | modeId);
+            await this.szRepr.write(stream, value.count);
+
+            // append/prepend: write modified data
+            if(partial === "append" || partial === "prepend") {
+                const slice = partial === "append"
+                    ? value.slice(-value.count)
+                    : value.slice(0, value.count);
+
+                for(const item of slice)
+                    await this.itemRepr.write(stream, item);
+            }
+
+            // insert: write index and list
+            if(partial === "insert") {
+                await this.szRepr.write(stream, value.index);
+                for(const item of value.slice(value.index, value.index + value.count))
+                    await this.itemRepr.write(stream, item);
+            }
+
+            // remove: write index
+            if(partial === "remove")
+                await this.szRepr.write(stream, value.index);
+        } else {
+            // plain list
+            await this.szRepr.write(stream, value.length);
+            for(const item of value)
+                await this.itemRepr.write(stream, item);
+        }
     }
 
-    override async read(stream: Readable): Promise<T[]> {
-        const len = await this.szRepr.read(stream);
-        const list: T[] = [];
-        for(let i = 0; i < len; i++)
-            list.push(await this.itemRepr.read(stream));
-        return list;
+    override async read(stream: Readable): Promise<ListOrUpdate<T>> {
+        // read one byte of length (could be partial mode)
+        const [msb] = await stream.read(1);
+
+        // check if it's a partial update
+        if(msb >> 4 === 0xF) {
+            const modeId = msb & 0xF;
+            const partial = partialModes[modeId];
+            const count = await this.szRepr.read(stream);
+
+            // append/prepend: read list
+            if(partial === "append" || partial === "prepend") {
+                const list = [];
+                for(let i = 0; i < count; i++)
+                    list.push(await this.itemRepr.read(stream));
+                return Object.assign(list, { partial, count });
+            }
+
+            // insert: read index and list
+            if(partial === "insert") {
+                const index = await this.szRepr.read(stream);
+                const list = [];
+                for(let i = 0; i < count; i++)
+                    list.push(await this.itemRepr.read(stream));
+                return Object.assign(list, { partial, index, count });
+            }
+
+            // remove: read index
+            if(partial === "remove") {
+                const index = await this.szRepr.read(stream);
+                return Object.assign([], { partial, index, count });
+            }
+
+            throw new Error(`Unknown partial mode: ${modeId}`);
+        } else {
+            const remSize = this.szRepr.size - 1;
+            const count = await new Int(remSize).read(stream)
+                        | msb << (8 * remSize);
+
+            // full list
+            const list: T[] = [];
+            for(let i = 0; i < count; i++)
+                list.push(await this.itemRepr.read(stream));
+            return list;
+        }
     }
 
     override findError(value: T[]) {
