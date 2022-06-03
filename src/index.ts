@@ -5,3 +5,4 @@ export * as segment from "./segment";
 export * from "./serial";
 export * from "./server";
 export * from "./session";
+export * from "./cache";

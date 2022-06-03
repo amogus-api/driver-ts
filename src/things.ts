@@ -1,16 +1,21 @@
 // Handles Entities, Methods, Confirmations and their specs
 
 import { Cloneable, NotNull } from "./common";
-import { FieldValue, FieldSpec } from "./repr";
+import { FieldValue, FieldSpec, DataRepr, FieldKeys, getTypeOfKey, List, ListUpdate } from "./repr";
 import { Session, InvocationEvent } from "./session";
 
 export interface EntitySpec {
-    fields: FieldSpec;
+    fields: FieldSpec & {
+        required: { id: DataRepr<bigint> },
+        optional: Record<string, unknown>
+    };
     methods: { [numericId: number]: Method };
 }
+
 export type ValuedEntity<E extends Entity<EntitySpec> = Entity<EntitySpec>> =
     Omit<E, "value"> &
     Required<Pick<E, "value">>;
+
 export type GetEntitySpec<E> = E extends Entity<infer S> ? S : never;
 
 export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Cloneable {
@@ -30,18 +35,58 @@ export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Clone
 
     abstract update(_params: { entity: ValuedEntity }): Promise<Record<string, never>>;
 
-    async $update(toUpdate: Partial<FieldValue<Spec["fields"]>>): Promise<void> {
-        this.value = { ...this.value, ...toUpdate };
-
+    async $update(toUpdate: Omit<FieldValue<Spec["fields"]>, "id">): Promise<void> {
         if(!this.value)
             throw new Error("This entity doesn't have a value");
 
+        this.value = Entity.mergeValues(this.spec.fields, this.value, { ...toUpdate, id: this.value.id }) as
+            FieldValue<Spec["fields"]>;
+
         const entity = this.clone();
-        const required = Object.fromEntries(
-            Object.entries(this.value).filter(([k, _]) => k in this.spec.fields.required));
-        entity.value = { ...required, ...toUpdate };
+        entity.value = { ...toUpdate, id: this.value.id } as FieldValue<Spec["fields"]>;
 
         await this.update({ entity: entity as ValuedEntity });
+    }
+
+    private static extractObject<S extends { [K: string]: any }>(source: S, ...keys: string[]) {
+        const result = {} as { [K: string]: any };
+        for(const key of keys)
+            result[key] = source[key];
+        return result;
+    }
+
+    static mergeValues<S extends FieldSpec, T extends FieldValue<S>>(s: S, a: T, b: T, expand = false): T {
+        if(typeof a !== "object" && b !== undefined)
+            return b;
+        if(typeof a !== "object")
+            return a;
+        if(!expand)
+            return Object.assign({ ...a }, b);
+
+        const result = { ...a };
+
+        for(const [k, v] of Object.entries(b)) {
+            const key = k as FieldKeys<S>;
+            const value = v as T[FieldKeys<S>];
+            const type = getTypeOfKey(s, k);
+
+            if(type instanceof List && "partial" in value) {
+                const arr = v as ListUpdate<any>;
+                const res = result as { [K in any]: ListUpdate<any> };
+                const partial = arr.partial;
+
+                if(partial === "append") res[key].push(...arr);
+                if(partial === "prepend") res[key].unshift(...arr);
+                if(partial === "insert") res[key].splice(arr.index, 0, ...arr);
+                if(partial === "remove") res[key].splice(arr.index, arr.count);
+
+                Object.assign(res[key], Entity.extractObject(arr, "partial", "count", "index"));
+            } else {
+                result[key] = Entity.mergeValues(s, a[key], b[key]);
+            }
+        }
+
+        return result;
     }
 
     static async $get(_id: bigint): Promise<ValuedEntity> {

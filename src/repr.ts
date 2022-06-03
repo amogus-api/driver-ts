@@ -195,11 +195,11 @@ export class Str extends DataRepr<string> {
 }
 
 // Full list or partial list update
-export type ListOrUpdate<T> =
-    T[] | (T[] & ({ partial: "append" | "prepend", count: number }
-    | { partial: "insert", index: number, count: number }
-    | { partial: "remove", index: number, count: number }));
 const partialModes = ["append", "prepend", "insert", "remove"];
+export type ListOrUpdate<T> = T[] | ListUpdate<T>;
+export type ListUpdate<T> = T[] & (
+      { partial: "append" | "prepend", count: number }
+    | { partial: "insert" | "remove", index: number, count: number });
 
 interface ListValidators {
     len?: range;
@@ -358,9 +358,20 @@ export interface FieldSpec {
     required: { [name: string]: DataRepr<any> };
     optional: { [name: string]: readonly [number, DataRepr<any>] };
 }
+
 export type FieldValue<Spec extends FieldSpec> =
-        { [K in keyof Spec["required"]]: TsType<Spec["required"][K]> } &
-        { [K in keyof Spec["optional"]]?: TsType<Spec["optional"][K][1]> };
+    { [K in keyof Spec["required"]]: TsType<Spec["required"][K]> } &
+    { [K in keyof Spec["optional"]]?: TsType<Spec["optional"][K][1]> };
+
+export type FieldKeys<Spec extends FieldSpec> = keyof Spec["required"] | keyof Spec["optional"];
+
+export function getTypeOfKey(spec: FieldSpec, key: string): DataRepr<any>|undefined {
+    if(key in spec.required)
+        return spec.required[key];
+    if(key in spec.optional)
+        return spec.optional[key][1];
+}
+
 export class FieldArray<Spec extends FieldSpec, Value extends FieldValue<Spec>> extends DataRepr<Value> {
     // The line above just makes sure that we only pass fields with valid names and values to the functions
 

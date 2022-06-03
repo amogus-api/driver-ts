@@ -27,7 +27,7 @@ describe("Entity method invocation", () => {
     // server transaction listener
     server.subscribe(async (event) => {
         if(event instanceof amogus.InvocationEvent) {
-            const method = event.method as amogus.NotNull<amogus.Method<amogus.MethodSpec>, "params">;
+            const method = event.method;
 
             if(method instanceof api.Test_StaticEcho)
                 await method.return({ str: `${method.params.str} return` });
@@ -43,9 +43,8 @@ describe("Entity method invocation", () => {
                 }
                 const entity = storeGet(id)! as ValuedEntity<api.MassiveFields>;
                 await method.return({ entity });
-            }
 
-            else if(method instanceof api.MassiveFields_Update) {
+            } else if(method instanceof api.MassiveFields_Update) {
                 const entity = method.params.entity;
                 if(!(entity instanceof api.MassiveFields))
                     return;

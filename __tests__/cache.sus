@@ -1,0 +1,30 @@
+# "real-world" use case
+
+include impostor.sus
+
+entity User(0) {
+    id: Int(8);
+    posts: opt(0) List(Int(8), 1);
+}
+
+compound Paragraph {
+    title: Str;
+    content: Str;
+}
+
+entity Article(1) {
+    id: Int(8);
+    author: opt(0) Int(8);
+    paragraphs: opt(1) List(Paragraph, 1);
+    liked_by: opt(2) List(Int(8), 2);
+
+    staticmethod create(0) {
+        paragraphs: List(Paragraph, 1);
+        returns { id: Int(8); }
+    }
+}
+
+@> Asks the server to add a paragraph to the article 500ms from now <@
+globalmethod trigger_update(0) {
+    returns { }
+}
