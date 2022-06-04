@@ -1,8 +1,8 @@
 ![License](https://img.shields.io/github/license/speedapi/driver-ts)
-![Version](https://img.shields.io/npm/v/speedapi/driver)
+![Version](https://img.shields.io/npm/v/@speedapi/driver)
 ![Coverage](https://coveralls.io/repos/github/speedapi/driver-ts/badge.svg?branch=master)
-![Downloads](https://img.shields.io/npm/dt/speedapi/driver)
-![Size](https://badgen.net/bundlephobia/minzip/speedapi/driver)
+![Downloads](https://img.shields.io/npm/dt/@speedapi/driver)
+![Size](https://img.shields.io/bundlephobia/minzip/@speedapi/driver)
 ![PRs and issues](https://img.shields.io/badge/PRs%20and%20issues-welcome-brightgreen)
 
 # SpeedAPI wire protocol implementation
