@@ -1,4 +1,4 @@
-import * as amogus from "../src/index";
+import * as speedapi from "../src/index";
 import { ValuedEntity } from "../src/things";
 import { createDummyPair } from "../src/transport/universal";
 import * as api from "./entity_output/ts/index";
@@ -26,7 +26,7 @@ describe("Entity method invocation", () => {
 
     // server transaction listener
     server.subscribe(async (event) => {
-        if(event instanceof amogus.InvocationEvent) {
+        if(event instanceof speedapi.InvocationEvent) {
             const method = event.method;
 
             if(method instanceof api.Test_StaticEcho)

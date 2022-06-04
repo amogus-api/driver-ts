@@ -1,17 +1,17 @@
 {
-  "name": "amogus-driver",
+  "name": "@speedapi/driver",
   "version": "1.3.0",
-  "description": "AMOGUS wire protocol implementation for TypeScript",
+  "description": "Speedapi wire protocol implementation for TypeScript",
   "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf dist transport && rollup -c && pnpm build:fix && tree dist transport",
     "build:fix": "pnpm build:fix:dts && pnpm build:fix:import",
     "build:fix:import": "sed -i 's/..\\/index/..\\/dist\\/index/g' transport/*",
     "build:fix:dts": "mv transport/transport/*.d.ts transport/ && rm -r transport/transport",
-    "test:sus": "susc -l ts __tests__/*.sus && sed -i 's/amogus-driver/..\\/..\\/..\\/src\\/index/g' __tests__/*_output/ts/index.ts",
+    "test:sus": "susc -l ts __tests__/*.sus && sed -i 's/@speedapi\\/driver/..\\/..\\/..\\/src\\/index/g' __tests__/*_output/ts/index.ts",
     "test": "pnpm lint && pnpm test:sus && jest --coverage",
     "lint": "pnpm eslint src --ext .ts",
-    "pub": "pnpm build && pnpm publish"
+    "pub": "pnpm build && pnpm publish --access public"
   },
   "files": [
     "dist",
@@ -20,10 +20,10 @@
   ],
   "repository": {
     "type": "github",
-    "url": "https://github.com/amogus-api/driver-ts.git"
+    "url": "https://github.com/speedapi/driver-ts.git"
   },
   "keywords": [
-    "amogus",
+    "speedapi",
     "api",
     "protocol",
     "binary",
@@ -33,9 +33,9 @@
   "author": "portasynthinca3",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/amogus-api/driver-ts/issues"
+    "url": "https://github.com/speedapi/driver-ts/issues"
   },
-  "homepage": "https://github.com/amogus-api/info#readme",
+  "homepage": "https://github.com/speedapi/info#readme",
   "devDependencies": {
     "@types/bluebird": "^3.5.36",
     "@types/jest": "^27.4.1",

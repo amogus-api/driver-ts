@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import * as amogus from "../src/index";
+import * as speedapi from "../src/index";
 import { TlsClient, TlsListener } from "../src/transport/node";
 import * as api from "./globalMethod_output/ts/index";
 
@@ -16,8 +16,8 @@ describe("Node TLS", () => {
             cert: fs.readFileSync("__tests__/certs/server.cert"),
             port: 1234,
             rejectUnauthorized: false,
-        }, (session: amogus.Session<ReturnType<typeof api.$specSpace>>) => {
-            const server = new amogus.Server(session, { });
+        }, (session: speedapi.Session<ReturnType<typeof api.$specSpace>>) => {
+            const server = new speedapi.Server(session, { });
 
             server.onInvocation("echo", async (method, _state) => {
                 await method.return({ str: `${method.params.str} return` });

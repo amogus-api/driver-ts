@@ -1,13 +1,13 @@
-import * as amogus from "../src/index";
+import * as speedapi from "../src/index";
 import { createDummyPair } from "../src/transport/universal";
 import * as api from "./cache_output/ts/index";
 
 describe("Client-side caching", () => {
     const { client, server } = createDummyPair<ReturnType<typeof api.$specSpace>>(api.$specSpace);
     const clientSession = api.$bind(client);
-    const clientCache = new amogus.Cache(client);
+    const clientCache = new speedapi.Cache(client);
     const serverSession = api.$bind(server);
-    const serverApi = new amogus.Server(server, { userId: BigInt(123) });
+    const serverApi = new speedapi.Server(server, { userId: BigInt(123) });
 
     // serverApi.debug = true;
 
@@ -35,7 +35,7 @@ describe("Client-side caching", () => {
             return;
         }
         await method.return({
-            entity: new serverSession.Article({ ...article, id }) as amogus.ValuedEntity,
+            entity: new serverSession.Article({ ...article, id }) as speedapi.ValuedEntity,
         });
     });
 
@@ -54,7 +54,7 @@ describe("Client-side caching", () => {
 
         // check if the update is a partial one
         const article = articleDb[id.toString()];
-        const pars = fields.paragraphs as amogus.repr.ListOrUpdate<typeof articleDb[string]["paragraphs"][number]>;
+        const pars = fields.paragraphs as speedapi.repr.ListOrUpdate<typeof articleDb[string]["paragraphs"][number]>;
         if("partial" in pars) {
             const partial = pars.partial;
             if(partial === "append") article.paragraphs.push(...pars);
@@ -74,13 +74,13 @@ describe("Client-side caching", () => {
         setTimeout(() => {
             const article = articleDb[artId.toString()];
             article.paragraphs.push(serverPar);
-            const upd = [...article.paragraphs] as amogus.repr.ListUpdate<typeof serverPar>;
+            const upd = [...article.paragraphs] as speedapi.repr.ListUpdate<typeof serverPar>;
             upd.partial = "append";
             upd.count = 1;
             void server.pushEntity(new serverSession.Article({
                 id: artId,
                 paragraphs: upd,
-            }) as amogus.ValuedEntity);
+            }) as speedapi.ValuedEntity);
         }, 500);
     });
 

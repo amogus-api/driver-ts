@@ -1,4 +1,4 @@
-// Common AMOGUS definitions
+// Common SpeedAPI definitions
 
 export type PeerType = "client" | "server";
 

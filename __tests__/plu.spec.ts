@@ -1,8 +1,8 @@
-import * as amogus from "../src/index";
+import * as speedapi from "../src/index";
 import { createDummyLinks } from "../src/transport/universal";
 
 describe("Partial list updates", () => {
-    const repr = new amogus.repr.List(new amogus.repr.Int(1), 1);
+    const repr = new speedapi.repr.List(new speedapi.repr.Int(1), 1);
 
     test("append", async () => {
         const [a, b] = createDummyLinks();

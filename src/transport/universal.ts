@@ -4,7 +4,7 @@ import { Duplex } from "../index";
 import { SpecSpace, SpecSpaceGen } from "../index";
 import { Session } from "../index";
 
-// Transforms event-driven interfaces to async read() and write() calls used by amogus
+// Transforms event-driven interfaces to async read() and write() calls used by SpeedAPI
 export abstract class BufferedLink extends Duplex {
     private readBuf = new Uint8Array(0);
     private dataListener?: () => void;

@@ -1,10 +1,10 @@
-import * as amogus from "../src/index";
+import * as speedapi from "../src/index";
 import { createDummyLinks } from "../src/transport/universal";
 
 describe("Atomic data type representation", () => {
     test("Int(1)", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.Int(1);
+        const repr = new speedapi.repr.Int(1);
 
         const values = [0, 1, 123, 255];
         for(const val of values) {
@@ -15,7 +15,7 @@ describe("Atomic data type representation", () => {
 
     test("Int(4)", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.Int(4);
+        const repr = new speedapi.repr.Int(4);
 
         const values = [0, 1, 123, 255, 256, 10000, 65535, 65536, 10000000];
         for(const val of values) {
@@ -26,7 +26,7 @@ describe("Atomic data type representation", () => {
 
     test("BigInt(16) (no polyfill)", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.BigInteger(16);
+        const repr = new speedapi.repr.BigInteger(16);
 
         const values = [
             BigInt(1) << BigInt(80),
@@ -41,8 +41,8 @@ describe("Atomic data type representation", () => {
 
     test("BigInt(16) (0x polyfill)", async () => {
         const [a, b] = createDummyLinks();
-        amogus.repr.BigInteger.polyfillMode = "0x";
-        const repr = new amogus.repr.BigInteger(16);
+        speedapi.repr.BigInteger.polyfillMode = "0x";
+        const repr = new speedapi.repr.BigInteger(16);
 
         // emulate polyfill
         const source = BigInt;
@@ -60,13 +60,13 @@ describe("Atomic data type representation", () => {
         }
 
         global.BigInt = source;
-        amogus.repr.BigInteger.polyfillMode = "none";
+        speedapi.repr.BigInteger.polyfillMode = "none";
     });
 
     test("BigInt(16) (radix polyfill)", async () => {
         const [a, b] = createDummyLinks();
-        amogus.repr.BigInteger.polyfillMode = "radix";
-        const repr = new amogus.repr.BigInteger(16);
+        speedapi.repr.BigInteger.polyfillMode = "radix";
+        const repr = new speedapi.repr.BigInteger(16);
 
         // emulate polyfill
         const source = BigInt;
@@ -87,14 +87,14 @@ describe("Atomic data type representation", () => {
         }
 
         global.BigInt = source;
-        amogus.repr.BigInteger.polyfillMode = "none";
+        speedapi.repr.BigInteger.polyfillMode = "none";
     });
 
     test("Str()", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.Str();
+        const repr = new speedapi.repr.Str();
 
-        const values = ["hi", "hello world", "aboba", "amogus", "i like turtles"];
+        const values = ["hi", "hello world", "aboba", "speedapi", "i like turtles"];
         for(const val of values) {
             await repr.write(a, val);
             expect(await repr.read(b)).toEqual(val);
@@ -103,7 +103,7 @@ describe("Atomic data type representation", () => {
 
     test("Bool()", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.Bool();
+        const repr = new speedapi.repr.Bool();
 
         const values = [false, true];
         for(const val of values) {
@@ -120,7 +120,7 @@ describe("Atomic data type representation", () => {
 
     test("List()", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.List(new amogus.repr.Int(4), 1);
+        const repr = new speedapi.repr.List(new speedapi.repr.Int(4), 1);
 
         const values = [
             [0, 1],
@@ -137,7 +137,7 @@ describe("Atomic data type representation", () => {
 
     test("Bin()", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.Bin();
+        const repr = new speedapi.repr.Bin();
 
         const values = [
             Uint8Array.from([0, 1]),

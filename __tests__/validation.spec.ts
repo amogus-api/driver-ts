@@ -1,10 +1,10 @@
-import * as amogus from "../src/index";
+import * as speedapi from "../src/index";
 import { createDummyLinks } from "../src/transport/universal";
 
 describe("Atomic data type validation", () => {
     test("Int(1)[val]", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.Int(1, { val: [10, 100] });
+        const repr = new speedapi.repr.Int(1, { val: [10, 100] });
 
         const values = [0, 1, 50, 123, 255];
         for(const val of values) {
@@ -18,7 +18,7 @@ describe("Atomic data type validation", () => {
 
     test("BigInt(16)[val]", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.BigInteger(16, { val: [BigInt(10), BigInt(100)] });
+        const repr = new speedapi.repr.BigInteger(16, { val: [BigInt(10), BigInt(100)] });
 
         const values = [
             BigInt(5), BigInt(10), BigInt(50), BigInt(123), BigInt(255),
@@ -37,9 +37,9 @@ describe("Atomic data type validation", () => {
 
     test("Str[len]", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.Str({ len: [2, 7] });
+        const repr = new speedapi.repr.Str({ len: [2, 7] });
 
-        const values = ["hi", "hello world", "aboba", "amogus", "i like turtles"];
+        const values = ["hi", "hello world", "aboba", "speedapi", "i like turtles"];
         for(const val of values) {
             await repr.write(a, val);
             const value = await repr.read(b);
@@ -51,7 +51,7 @@ describe("Atomic data type validation", () => {
 
     test("Str[match]", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.Str({ match: /[a-z]+/i });
+        const repr = new speedapi.repr.Str({ match: /[a-z]+/i });
 
         const values = ["hi", "heLLo", "123", "!@#$%^&*()_+"];
         for(const val of values) {
@@ -65,7 +65,7 @@ describe("Atomic data type validation", () => {
 
     test("Bool", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.Bool();
+        const repr = new speedapi.repr.Bool();
 
         const values = [false, true];
         for(const val of values) {
@@ -78,7 +78,7 @@ describe("Atomic data type validation", () => {
 
     test("List[len]", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.List(new amogus.repr.Int(4), 1, { len: [0, 3] });
+        const repr = new speedapi.repr.List(new speedapi.repr.Int(4), 1, { len: [0, 3] });
 
         const pass = [
             [],
@@ -105,7 +105,7 @@ describe("Atomic data type validation", () => {
 
     test("Bin[len]", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.Bin({ len: [0, 3] });
+        const repr = new speedapi.repr.Bin({ len: [0, 3] });
 
         const pass = [
             Buffer.from([]),
@@ -132,7 +132,7 @@ describe("Atomic data type validation", () => {
 
     test("List(Int[val])", async () => {
         const [a, b] = createDummyLinks();
-        const repr = new amogus.repr.List(new amogus.repr.Int(4, { val: [10, 100] }), 1);
+        const repr = new speedapi.repr.List(new speedapi.repr.Int(4, { val: [10, 100] }), 1);
 
         const values = [
             [true, [30, 50, 70, 90]],

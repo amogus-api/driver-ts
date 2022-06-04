@@ -1,4 +1,4 @@
-import * as amogus from "../src/index";
+import * as speedapi from "../src/index";
 import * as api from "./compound_output/ts/index";
 
 function randomColor() {
@@ -11,7 +11,7 @@ function randomColor() {
 
 describe("Compound", () => {
     test("Color", async () => {
-        const serializer = new amogus.Serializer(api.ColorSpec);
+        const serializer = new speedapi.Serializer(api.ColorSpec);
 
         for(let i = 0; i < 10; i++) {
             const color = randomColor();
@@ -21,7 +21,7 @@ describe("Compound", () => {
     });
 
     test("TwoColors", async () => {
-        const serializer = new amogus.Serializer(api.TwoColorsSpec);
+        const serializer = new speedapi.Serializer(api.TwoColorsSpec);
 
         for(let i = 0; i < 10; i++) {
             const first = randomColor();
@@ -35,7 +35,7 @@ describe("Compound", () => {
     });
 
     test("MaybeTwoColors", async () => {
-        const serializer = new amogus.Serializer(api.MaybeTwoColorsSpec);
+        const serializer = new speedapi.Serializer(api.MaybeTwoColorsSpec);
 
         for(let i = 0; i < 10; i++) {
             const first = randomColor();

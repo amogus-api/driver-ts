@@ -1,4 +1,4 @@
-import * as amogus from "../src/index";
+import * as speedapi from "../src/index";
 import { createDummyPair } from "../src/transport/universal";
 import * as api from "./entity_output/ts/index";
 
@@ -9,7 +9,7 @@ function delay(ms: number) {
 describe("Nice server API", () => {
     const { client, server } = createDummyPair<ReturnType<typeof api.$specSpace>>(api.$specSpace);
     const clientSession = api.$bind(client);
-    const niceServer = new amogus.Server(server, { suffix: "!" });
+    const niceServer = new speedapi.Server(server, { suffix: "!" });
 
     niceServer.onInvocation("Test.static_echo", async (method, state) => {
         const params = method.params;

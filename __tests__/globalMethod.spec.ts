@@ -1,4 +1,4 @@
-import * as amogus from "../src/index";
+import * as speedapi from "../src/index";
 import { createDummyPair } from "../src/transport/universal";
 import * as api from "./globalMethod_output/ts/index";
 
@@ -10,7 +10,7 @@ describe("Global method invocation", () => {
     // server transaction listener
     server.subscribe(async (event) => {
         // only process echo() invocations
-        if(!(event instanceof amogus.InvocationEvent))
+        if(!(event instanceof speedapi.InvocationEvent))
             return;
         const method = event.method;
         if(!(method instanceof api.Echo))
@@ -18,8 +18,8 @@ describe("Global method invocation", () => {
 
         if(serverAskCaptcha) {
             // ask captcha and compare solution
-            const { code } = await method.confirm(new api.Captcha(), { url: "https://example.com/amogus.png" });
-            if(code === "amogus")
+            const { code } = await method.confirm(new api.Captcha(), { url: "https://example.com/speedapi.png" });
+            if(code === "speedapi")
                 await method.return({ str: `${method.params.str} return` });
             else
                 await method.error(api.ErrorCode.validation_failed, "Invalid captcha");
@@ -42,8 +42,8 @@ describe("Global method invocation", () => {
 
         const { str } = await clientSession.echo({ str: "Hello, World!" }, async (conf) => {
             if(conf instanceof api.Captcha) {
-                expect(conf.request!.url).toEqual("https://example.com/amogus.png");
-                return { code: "amogus" };
+                expect(conf.request!.url).toEqual("https://example.com/speedapi.png");
+                return { code: "speedapi" };
             }
         });
 
@@ -68,8 +68,8 @@ describe("Global method invocation", () => {
         try {
             await clientSession.echo({ str: "Hello, World!" }, async (conf) => {
                 if(conf instanceof api.Captcha) {
-                    expect(conf.request!.url).toEqual("https://example.com/amogus.png");
-                    return { code: "not amogus" };
+                    expect(conf.request!.url).toEqual("https://example.com/speedapi.png");
+                    return { code: "not speedapi" };
                 }
             });
         } catch({ code, message }) {

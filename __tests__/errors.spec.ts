@@ -1,4 +1,4 @@
-import * as amogus from "../src/index";
+import * as speedapi from "../src/index";
 import { createDummyPair } from "../src/transport/universal";
 import * as api from "./entity_output/ts/index";
 
@@ -9,7 +9,7 @@ describe("Library errors", () => {
 
     test("call pushEntity() on the client", async () => {
         try {
-            await client.pushEntity(new session.Test({ id: BigInt(123) }) as amogus.ValuedEntity);
+            await client.pushEntity(new session.Test({ id: BigInt(123) }) as speedapi.ValuedEntity);
         } catch(e) {
             expect((e as Error).message).toBe("pushEntity can only be called on the server");
         }
@@ -21,7 +21,7 @@ describe("Library errors", () => {
 
         for(let i = 0; i < 256; i++) {
             try {
-                await client.createTransaction(new amogus.segment.InvokeMethodSegment(0, method));
+                await client.createTransaction(new speedapi.segment.InvokeMethodSegment(0, method));
                 expect(i).toBeLessThan(255);
             } catch(ex) {
                 expect(i).toBe(255);
@@ -46,7 +46,7 @@ describe("Library errors", () => {
 
     test("create Int(8)", () => {
         try {
-            new amogus.repr.Int(8);
+            new speedapi.repr.Int(8);
             fail("Expected error");
         } catch(ex) {
             expect((ex as Error).message).toBe("`Int`s are limited to 4 bytes due to JavaScript Number precision limitations. Consider using a `BigInteger` repr instead.");
