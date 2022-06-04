@@ -56,6 +56,18 @@ describe("Entity method invocation", () => {
                     ...entity.value,
                 }) as ValuedEntity<api.MassiveFields>);
                 await method.return({});
+
+            } else if(method instanceof api.StringId_Get) {
+                const id = method.params.id;
+                await method.return({ entity: new serverSession.StringId({
+                    id, a: `a for id ${id}`,
+                }) });
+
+            } else if(method instanceof api.StringId_GetB) {
+                const id = method.entityId;
+                await method.return({
+                    b: `b for id ${id}`,
+                });
             }
         }
     });
@@ -106,5 +118,17 @@ describe("Entity method invocation", () => {
 
             void serverSession.$session.pushEntity(new serverSession.MassiveFields({ id: BigInt(123), g: 420 }) as ValuedEntity);
         });
+    });
+
+    test("get string-id entity", async () => {
+        const entity = await clientSession.StringId.$get("test");
+        expect(entity.value.id).toEqual("test");
+        expect(entity.value.a).toEqual("a for id test");
+    });
+
+    test("call dynamic method on string-id entity", async () => {
+        const entity = new clientSession.StringId({ id: "test", a: "aaaaa" });
+        const { b } = await entity.getB({ });
+        expect(b).toEqual("b for id test");
     });
 });

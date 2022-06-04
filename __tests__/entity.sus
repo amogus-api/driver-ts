@@ -63,3 +63,12 @@ entity MassiveFields(1) {
     h: opt(7) Int(2);
     i: opt(8) Int(2);
 }
+
+entity StringId(2) {
+    id: Str;
+    a: Str;
+
+    method get_b(0) {
+        returns { b: Str; }
+    }
+}

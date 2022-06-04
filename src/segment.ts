@@ -2,7 +2,7 @@
 
 import * as common from "./common";
 import * as things from "./things";
-import { Entity as EntityRepr, FieldArray, Int, BigInteger, Str } from "./repr";
+import { Entity as EntityRepr, FieldArray, Int, Str, DataRepr } from "./repr";
 import { Session } from "./session";
 
 export abstract class Segment {
@@ -64,24 +64,27 @@ export class InvokeMethodSegment extends Segment {
 
     static override async decode(session: Session, stream: common.Readable, prefix: number, tran: number): Promise<InvokeMethodSegment> {
         // read IDs
-        let numericId = (await stream.read(1))[0];
-        let numericEntityId: number|undefined = undefined; // the signature of an entity type
-        let entityId: bigint|undefined = undefined; // the ID used to reference an entity
+        let [methodId] = await stream.read(1);
+        let entityTypeId: number|undefined = undefined; // the signature of an entity type
+        let entityId: any|undefined = undefined; // the ID used to reference an entity
 
-        if(numericId & 0x80) { // highest bit set
-            numericEntityId = (await stream.read(1))[0];
-            if(numericEntityId & 0x80) {
-                entityId = await new BigInteger(8).read(stream);
-                numericEntityId &= ~0x80;
-                numericId &= ~0x80; // clear highest bit to indicate a dynamic method
-            }
+        if(methodId & 0x80) { // highest bit set
+            [entityTypeId] = await stream.read(1);
+            methodId &= 0x7f;
+            methodId |= ~entityTypeId & 0x80;
         }
 
         // get method template
-        const methodSet = numericEntityId === undefined
+        const methodSet = entityTypeId === undefined
             ? session.specSpace.globalMethods
-            : session.specSpace.entities[numericEntityId].spec.methods;
-        const method = methodSet[numericId].clone();
+            : session.specSpace.entities[entityTypeId & 0x7f].spec.methods;
+        const method = methodSet[methodId].clone();
+
+        // read entity id
+        if(entityTypeId !== undefined && (entityTypeId & 0x80)) {
+            const idType = method.spec.entityIdRepr as DataRepr<any>;
+            entityId = await idType.read(stream);
+        }
 
         // read fields
         const array = new FieldArray(method.spec.params);
@@ -107,20 +110,20 @@ export class InvokeMethodSegment extends Segment {
 
         // write IDs
         let numId = this.payload.numericId;
-        let entNumId = this.payload.entityNumericId;
+        let entTypeId = this.payload.entityTypeId;
         const entId = this.payload.entityId;
 
-        if(entNumId !== undefined) {
+        if(entTypeId !== undefined) {
             numId |= 0x80;
             if(entId !== undefined)
-                entNumId |= 0x80;
+                entTypeId |= 0x80;
         }
 
         await stream.write(Uint8Array.from([numId]));
-        if(entNumId !== undefined)
-            await stream.write(Uint8Array.from([entNumId]));
+        if(entTypeId !== undefined)
+            await stream.write(Uint8Array.from([entTypeId]));
         if(entId !== undefined)
-            await new BigInteger(8).write(stream, entId);
+            await (this.payload.spec.entityIdRepr as DataRepr<any>).write(stream, entId);
 
         // write fields
         await array.write(stream, this.payload.params);

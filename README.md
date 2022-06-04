@@ -1,5 +1,3 @@
-<p align="center"><img src="https://github.com/amogus-api/info/raw/master/logos/logo_color_on_white.png" height="128"/></p>
-
 ![License](https://img.shields.io/github/license/amogus-api/driver-ts)
 ![Version](https://img.shields.io/npm/v/amogus-driver)
 ![Coverage](https://coveralls.io/repos/github/amogus-api/driver-ts/badge.svg?branch=master)

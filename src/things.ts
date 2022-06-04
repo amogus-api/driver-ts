@@ -6,7 +6,7 @@ import { Session, InvocationEvent } from "./session";
 
 export interface EntitySpec {
     fields: FieldSpec & {
-        required: { id: DataRepr<bigint> },
+        required: { id: DataRepr<any> },
         optional: Record<string, unknown>
     };
     methods: { [numericId: number]: Method };
@@ -89,7 +89,7 @@ export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Clone
         return result;
     }
 
-    static async $get(_id: bigint): Promise<ValuedEntity> {
+    static async $get(_id: any): Promise<ValuedEntity> {
         throw new Error("Not implemented");
     }
 }
@@ -102,25 +102,26 @@ export interface MethodSpec {
     returns: FieldSpec;
     confirmations: Confirmation[];
     rateLimit?: readonly [number, number];
+    entityIdRepr?: DataRepr<any>;
 }
 export type GetMethodSpec<M> = M extends Method<infer S> ? S : never;
 
 export abstract class Method<Spec extends MethodSpec = MethodSpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
-    readonly entityNumericId?: number;
+    readonly entityTypeId?: number;
 
     params?: FieldValue<Spec["params"]>;
     returnVal?: FieldValue<Spec["returns"]>;
-    entityId?: bigint;
+    entityId?: Spec["entityIdRepr"] extends DataRepr<infer T> ? T : any;
 
     sessionEvent?: InvocationEvent<NotNull<Method<Spec>, "params">>;
 
-    constructor(spec: Spec, numericId: number, entityNumericId?: number) {
+    constructor(spec: Spec, numericId: number, entityTypeId?: number) {
         super();
         this.spec = spec;
         this.numericId = numericId;
-        this.entityNumericId = entityNumericId;
+        this.entityTypeId = entityTypeId;
     }
 
     async return(ret: FieldValue<Spec["returns"]>): Promise<void> {

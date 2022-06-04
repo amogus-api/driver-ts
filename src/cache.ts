@@ -2,7 +2,9 @@
 
 import { Entity, ValuedEntity } from "./things";
 import { Session } from "./session";
-import { FieldValue } from "./repr";
+import { FieldValue, TsType } from "./repr";
+
+type IdType<E extends Entity> = TsType<E["spec"]["fields"]["required"]["id"]>;
 
 export class Cache {
     private cache: { [id: string]: Entity } = {};
@@ -15,32 +17,32 @@ export class Cache {
         });
     }
 
-    async get<T extends Entity>(reference: new () => T, id: bigint): Promise<ValuedEntity<T>> {
-        const cached = this.cache[id.toString()];
+    async get<T extends Entity>(reference: new () => T, id: IdType<T>): Promise<ValuedEntity<T>> {
+        const cached = this.cache[String(id)];
         if(cached)
             return cached as ValuedEntity<T>;
 
         // @ts-expect-error we know that $get exists
         const entity = await reference.$get(id);
-        this.cache[id.toString()] = entity;
+        this.cache[String(id)] = entity;
         return entity as ValuedEntity<T>;
     }
 
     async update<T extends Entity>(reference: new (data: FieldValue<T["spec"]["fields"]>) => T, data: FieldValue<T["spec"]["fields"]>) {
-        const entity = this.cache[data.id.toString()] ?? new reference(data);
+        const entity = this.cache[String(data.id)] ?? new reference(data);
         await entity.$update(data);
-        this.cache[data.id.toString()] = entity;
+        this.cache[String(data.id)] = entity;
     }
 
     // subscribes to future entity updates
-    subscribe<T extends Entity>(_reference: new () => T, id: bigint, cb: (entity: T) => any) {
+    subscribe<T extends Entity>(_reference: new () => T, id: IdType<T>, cb: (entity: T) => any) {
         type U = (entity: Entity) => void;
-        if(!this.listeners[id.toString()])
-            this.listeners[id.toString()] = [];
-        if(this.listeners[id.toString()]!.includes(cb as U))
+        if(!this.listeners[String(id)])
+            this.listeners[String(id)] = [];
+        if(this.listeners[String(id)]!.includes(cb as U))
             return [id, cb] as const;
 
-        this.listeners[id.toString()]!.push(cb as U);
+        this.listeners[String(id)]!.push(cb as U);
 
         return [id, cb] as const;
     }
@@ -48,13 +50,13 @@ export class Cache {
     unsubscribe<T extends Entity>(data: readonly [bigint, (entity: T) => void]) {
         const [id, cb] = data;
 
-        let listeners = this.listeners[id.toString()]!;
+        let listeners = this.listeners[String(id)]!;
         listeners = listeners.filter(x => x !== cb);
-        this.listeners[id.toString()] = listeners.length === 0 ? undefined : listeners;
+        this.listeners[String(id)] = listeners.length === 0 ? undefined : listeners;
     }
 
     private got_update(entity: Entity, expand = false) {
-        const id = entity.value!.id.toString();
+        const id = String(entity.value!.id);
 
         // merge fields
         this.cache[id].value = Entity.mergeValues(entity.spec.fields,
