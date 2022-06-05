@@ -1,3 +1,5 @@
+<img align="right" width="128" src="https://github.com/speedapi/info/blob/master/logos/logo_color.png?raw=true">
+
 ![License](https://img.shields.io/github/license/speedapi/driver-ts)
 ![Version](https://img.shields.io/npm/v/@speedapi/driver)
 ![Coverage](https://coveralls.io/repos/github/speedapi/driver-ts/badge.svg?branch=master)
@@ -27,6 +29,10 @@ speedapi.repr.BigInteger.polyfillMode = "0x";
 speedapi.repr.BigInteger.polyfillMode = "none";
 // OR don't do anything, this is the default value
 ```
+
+Also install a transport-level library corresponding to your environment:
+  - `npm i @speedapi/node` for Node.JS
+  - more coming...
 
 # What is SpeedAPI?
 It's a platform-agnostic API and serialization tool specifically geared towards high-throughput realtime applications. You can read more about its features [here](https://github.com/speedapi/info)

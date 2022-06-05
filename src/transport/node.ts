@@ -1,85 +1,36 @@
-// Transport layer implementations for Node.JS
+// stub \(-_-)/
 
-import { BufferedLink } from "./universal";
-import { SpecSpaceGen } from "../index";
-import { Session } from "../index";
-import * as tls from "tls";
+import { Session } from "../session";
 
-class TlsStream extends BufferedLink {
-    socket: tls.TLSSocket;
+const message = "This class is deprecated and will be totally removed in SpeedAPI 2, use `@speedapi/node`";
 
-    constructor(socket: tls.TLSSocket) {
-        super();
-        this.socket = socket;
-        socket.on("data", (data: Buffer) => {
-            this.dataArrived(data);
-        });
-        socket.on("close", () => {
-            this.trigger({ type: "closed" });
-        });
+export class TlsClient extends Session {
+    constructor(_specSpace: any, _tlsOptions: any) {
+        throw new Error(message);
+        // @ts-expect-error unreached code
+        super(undefined, undefined, undefined);
     }
-
-    protected async dataWrite(data: Uint8Array): Promise<void> {
-        return await new Promise((resolve, reject) => {
-            this.socket.write(data, (err) => {
-                if(err)
-                    reject(err);
-                else
-                    resolve();
-            });
-        });
-    }
-
-    override async close(): Promise<void> {
-        this.socket.destroy();
-        this.trigger({ type: "closed" });
-    }
-}
-
-export class TlsClient<Gen extends SpecSpaceGen> extends Session<Gen> {
-    private readonly socket;
-
-    constructor(specSpace: Gen, tlsOptions: tls.ConnectionOptions) {
-        const socket = tls.connect(tlsOptions);
-        const stream = new TlsStream(socket);
-
-        super(specSpace, stream, "client");
-        this.stream = stream;
-        this.socket = socket;
-    }
-
     override async stop() {
-        await super.stop();
-        this.socket.destroy();
+        throw new Error(message);
     }
 }
 
-export class TlsServer<Gen extends SpecSpaceGen> extends Session<Gen> {
-    private readonly socket;
-
-    constructor(specSpace: Gen, socket: tls.TLSSocket) {
-        super(specSpace, new TlsStream(socket), "server");
-        this.socket = socket;
+export class TlsServer extends Session {
+    constructor(_specSpace: any, _socket: any) {
+        throw new Error(message);
+        // @ts-expect-error unreached code
+        super(undefined, undefined, undefined);
     }
-
     override async stop() {
-        await super.stop();
-        this.socket.destroy();
+        throw new Error(message);
     }
 }
 
-export class TlsListener<Gen extends SpecSpaceGen> {
-    private readonly server;
-
-    constructor(specSpace: Gen, options: tls.TlsOptions & { port: number, host?: string }, cb: (socket: TlsServer<Gen>) => void) {
-        this.server = tls.createServer(options, (socket) => {
-            const session = new TlsServer(specSpace, socket);
-            cb(session);
-        });
-        this.server.listen(options.port, options.host);
+export class TlsListener {
+    constructor(_specSpace: any, _options: any, _cb: any) {
+        throw new Error(message);
     }
-
     async close() {
-        this.server.close();
+        throw new Error(message);
     }
 }
