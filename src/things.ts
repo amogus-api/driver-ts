@@ -1,7 +1,7 @@
 // Handles Entities, Methods, Confirmations and their specs
 
 import { Cloneable, NotNull } from "./common";
-import { FieldValue, FieldSpec, DataRepr, FieldKeys, getTypeOfKey, List, ListUpdate } from "./repr";
+import { FieldValue, FieldSpec, DataRepr, FieldKeys, getTypeOfKey, List, mergePlu } from "./repr";
 import { Session, InvocationEvent } from "./session";
 
 export interface EntitySpec {
@@ -48,42 +48,24 @@ export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Clone
         await this.update({ entity: entity as ValuedEntity });
     }
 
-    private static extractObject<S extends { [K: string]: any }>(source: S, ...keys: string[]) {
-        const result = {} as { [K: string]: any };
-        for(const key of keys)
-            result[key] = source[key];
-        return result;
-    }
-
-    static mergeValues<S extends FieldSpec, T extends FieldValue<S>>(s: S, a: T, b: T, expand = false): T {
-        if(typeof a !== "object" && b !== undefined)
-            return b;
-        if(typeof a !== "object")
-            return a;
+    static mergeValues<S extends FieldSpec, T extends FieldValue<S>>(spec: S, first: T, second: T, expand = false): T {
+        if(typeof first !== "object" && second !== undefined)
+            return second;
+        if(typeof first !== "object")
+            return first;
         if(!expand)
-            return Object.assign({ ...a }, b);
+            return Object.assign({ ...first }, second);
 
-        const result = { ...a };
+        const result = { ...first };
 
-        for(const [k, v] of Object.entries(b)) {
+        for(const [k, v] of Object.entries(second)) {
             const key = k as FieldKeys<S>;
-            const value = v as T[FieldKeys<S>];
-            const type = getTypeOfKey(s, k);
+            const type = getTypeOfKey(spec, k);
 
-            if(type instanceof List && "partial" in value) {
-                const arr = v as ListUpdate<any>;
-                const res = result as { [K in any]: ListUpdate<any> };
-                const partial = arr.partial;
-
-                if(partial === "append") res[key].push(...arr);
-                if(partial === "prepend") res[key].unshift(...arr);
-                if(partial === "insert") res[key].splice(arr.index, 0, ...arr);
-                if(partial === "remove") res[key].splice(arr.index, arr.count);
-
-                Object.assign(res[key], Entity.extractObject(arr, "partial", "count", "index"));
-            } else {
-                result[key] = Entity.mergeValues(s, a[key], b[key]);
-            }
+            if(type instanceof List)
+                result[key] = mergePlu(first[key], v) as T[keyof S["required"]] & T[keyof S["optional"]];
+            else
+                result[key] = Entity.mergeValues(spec, first[key], second[key]);
         }
 
         return result;

@@ -201,6 +201,28 @@ export type ListUpdate<T> = T[] & (
       { partial: "append" | "prepend", count: number }
     | { partial: "insert" | "remove", index: number, count: number });
 
+function extractObject<S extends { [K: string]: any }>(source: S, ...keys: string[]) {
+    const result = {} as { [K: string]: any };
+    for(const key of keys)
+        result[key] = source[key];
+    return result;
+}
+// Merges a PLU with an existing list and assigns PLU metadata to it
+export function mergePlu<T>(source: T[], update: ListOrUpdate<T>): T[] {
+    if("partial" in update) {
+        const partial = update.partial;
+        const result = [...source];
+
+        if(partial === "append") result.push(...update);
+        if(partial === "prepend") result.unshift(...update);
+        if(partial === "insert") result.splice(update.index, 0, ...update);
+        if(partial === "remove") result.splice(update.index, update.count);
+        return Object.assign(result, extractObject(update, "partial", "count", "index"));
+    } else {
+        return update;
+    }
+}
+
 interface ListValidators {
     len?: range;
 }
