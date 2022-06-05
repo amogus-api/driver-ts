@@ -96,17 +96,17 @@ export type EntityEvent = { type: "entity_update", entity: things.ValuedEntity }
 export type CloseEvent = { type: "close" };
 export type SessionEvent = TranSessionEvent | InvocationEvent | EntityEvent | CloseEvent;
 
-export abstract class Session<Spec extends things.SpecSpace = things.SpecSpace> extends common.EventHost<SessionEvent> {
-    specSpace: Spec;
+export abstract class Session<Gen extends things.SpecSpaceGen = things.SpecSpaceGen> extends common.EventHost<SessionEvent> {
+    specSpace: things.SpaceOfGen<Gen>;
     transactions: Transaction[] = [];
 
     protected stream: common.Duplex;
     private self: common.PeerType;
     private active = false;
 
-    constructor(specSpace: (session: Session<Spec>) => Spec, stream: common.Duplex, self: common.PeerType) {
+    constructor(specSpace: Gen, stream: common.Duplex, self: common.PeerType) {
         super();
-        const space = specSpace(this);
+        const space = specSpace(this) as things.SpaceOfGen<Gen>;
 
         this.subscribe((e) => this.processTran(e));
         this.specSpace = space;

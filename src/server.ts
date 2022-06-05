@@ -8,7 +8,7 @@ import { SpecSpace, AllMethods } from "./things";
 type MethodByName<M extends AllMethods<SpecSpace>, N extends M["spec"]["name"]> =
     Extract<M, { spec: { name: N } }>;
 
-export class Server<State extends object, Session extends SessionType<SpecSpace>> {
+export class Server<State extends object, Session extends SessionType> {
     debug: boolean;
 
     private session: Session;

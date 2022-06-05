@@ -43,3 +43,6 @@ pnpm i
 pip3 install susc
 pnpm test
 ```
+
+# TypeScript notice
+This project relies _heavily_ on typing. As such, the language server gets misled into thinking that an expression type is `any` even though it's not just because the type is deeply nested. If you see a type error in your IDE that you think shouldn't be there or you're missing some autocomplete entries, try restarting your IDE and/or language server.

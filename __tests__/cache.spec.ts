@@ -3,7 +3,7 @@ import { createDummyPair } from "../src/transport/universal";
 import * as api from "./cache_output/ts/index";
 
 describe("Client-side caching", () => {
-    const { client, server } = createDummyPair<ReturnType<typeof api.$specSpace>>(api.$specSpace);
+    const { client, server } = createDummyPair(api.$specSpace);
     const clientSession = api.$bind(client);
     const clientCache = new speedapi.Cache(client);
     const serverSession = api.$bind(server);

@@ -16,7 +16,7 @@ describe("Node TLS", () => {
             cert: fs.readFileSync("__tests__/certs/server.cert"),
             port: 1234,
             rejectUnauthorized: false,
-        }, (session: speedapi.Session<ReturnType<typeof api.$specSpace>>) => {
+        }, (session) => {
             const server = new speedapi.Server(session, { });
 
             server.onInvocation("echo", async (method, _state) => {

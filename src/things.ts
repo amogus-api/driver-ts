@@ -179,5 +179,5 @@ export type AllMethods<Spec extends SpecSpace> =
     ObjValues<Spec["globalMethods"]> |
     ObjValues<GetEntitySpec<ObjValues<Spec["entities"]>>["methods"]>;
 
-export type SpecSpaceGen<Spec extends SpecSpace = SpecSpace> = (session: Session<Spec>) => Spec;
-export type SpaceOfGen<Gen> = Gen extends SpecSpaceGen<infer S> ? S : never;
+export type SpecSpaceGen<Spec extends SpecSpace = SpecSpace> = (session: Session) => Spec;
+export type SpaceOfGen<Gen extends SpecSpaceGen> = Gen extends SpecSpaceGen<infer S> ? S : never;

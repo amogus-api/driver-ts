@@ -1,7 +1,7 @@
 // Platform-agnostic transport layer implementations
 
 import { Duplex } from "../index";
-import { SpecSpace, SpecSpaceGen } from "../index";
+import { SpecSpaceGen } from "../index";
 import { Session } from "../index";
 
 // Transforms event-driven interfaces to async read() and write() calls used by SpeedAPI
@@ -63,13 +63,13 @@ class DummyLink extends BufferedLink {
     }
 }
 
-class DummyClient<Spec extends SpecSpace> extends Session<Spec> {
-    constructor(specSpace: SpecSpaceGen<Spec>, link: DummyLink) {
+class DummyClient<Gen extends SpecSpaceGen> extends Session<Gen> {
+    constructor(specSpace: Gen, link: DummyLink) {
         super(specSpace, link, "client");
     }
 }
-class DummyServer<Spec extends SpecSpace> extends Session<Spec> {
-    constructor(specSpace: SpecSpaceGen<Spec>, link: DummyLink) {
+class DummyServer<Gen extends SpecSpaceGen> extends Session<Gen> {
+    constructor(specSpace: Gen, link: DummyLink) {
         super(specSpace, link, "server");
     }
 }
@@ -81,7 +81,7 @@ export function createDummyLinks() {
     return [a, b];
 }
 
-export function createDummyPair<Spec extends SpecSpace>(specSpace: SpecSpaceGen<Spec>) {
+export function createDummyPair<Gen extends SpecSpaceGen>(specSpace: Gen) {
     const [a, b] = createDummyLinks();
     return {
         server: new DummyServer(specSpace, a),

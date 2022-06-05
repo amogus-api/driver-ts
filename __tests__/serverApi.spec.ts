@@ -7,7 +7,7 @@ function delay(ms: number) {
 }
 
 describe("Nice server API", () => {
-    const { client, server } = createDummyPair<ReturnType<typeof api.$specSpace>>(api.$specSpace);
+    const { client, server } = createDummyPair(api.$specSpace);
     const clientSession = api.$bind(client);
     const niceServer = new speedapi.Server(server, { suffix: "!" });
 
