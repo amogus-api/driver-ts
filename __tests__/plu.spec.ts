@@ -12,6 +12,7 @@ describe("Partial list updates", () => {
         Object.assign(expected, { partial: "append", count: 2 });
 
         await repr.write(a, arr);
+        await a.flush();
         expect(await repr.read(b)).toEqual(expected);
     });
 
@@ -23,6 +24,7 @@ describe("Partial list updates", () => {
         Object.assign(expected, { partial: "prepend", count: 2 });
 
         await repr.write(a, arr);
+        await a.flush();
         expect(await repr.read(b)).toEqual(expected);
     });
 
@@ -34,6 +36,7 @@ describe("Partial list updates", () => {
         Object.assign(expected, { partial: "insert", index: 1, count: 2 });
 
         await repr.write(a, arr);
+        await a.flush();
         expect(await repr.read(b)).toEqual(expected);
     });
 
@@ -45,6 +48,7 @@ describe("Partial list updates", () => {
         Object.assign(expected, { partial: "remove", index: 1, count: 2 });
 
         await repr.write(a, arr);
+        await a.flush();
         expect(await repr.read(b)).toEqual(expected);
     });
 });

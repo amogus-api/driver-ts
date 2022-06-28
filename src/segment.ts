@@ -28,6 +28,7 @@ export abstract class Segment {
     async write(stream: common.Writable) {
         await stream.write(Uint8Array.from([this.transactionId]));
         await this.encode(stream);
+        await stream.flush();
     }
 
     static async read(session: Session, stream: common.Readable, boundTo: common.PeerType): Promise<Segment> {

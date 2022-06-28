@@ -27,6 +27,8 @@ class Collector extends Duplex {
     async close(): Promise<void> {
         this.trigger({ type: "closed" });
     }
+
+    async flush() { }
 }
 
 export class Serializer<Spec extends FieldSpec> {

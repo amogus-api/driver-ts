@@ -84,7 +84,7 @@ describe("Nice server API", () => {
         niceServer.debug = true;
 
         await clientSession.Test.staticEcho({ str: "Hello" });
-        expect(console.log).toHaveBeenCalledTimes(4);
+        expect(console.log).toHaveBeenCalledTimes(8);
 
         niceServer.debug = false;
     });

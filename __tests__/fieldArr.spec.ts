@@ -28,6 +28,7 @@ describe("Field arrays", () => {
 
         for(const val of values) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(value).toEqual(val);
         }
@@ -50,6 +51,7 @@ describe("Field arrays", () => {
 
         for(const [pass, val] of values) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(value).toEqual(val);
             expect(repr.findError(value) === null).toEqual(pass);
@@ -72,6 +74,7 @@ describe("Field arrays", () => {
 
         for(const val of values) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
 
             expect(value).toEqual(val);
@@ -95,6 +98,7 @@ describe("Field arrays", () => {
 
         for(const val of values) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
 
             expect(value).toEqual(val);
@@ -112,6 +116,7 @@ describe("Field arrays", () => {
 
         repr.setMode([true, false]);
         await a.write(Buffer.from([123, 123]));
+        await a.flush();
         try {
             await repr.read(b);
             fail("Expected error");
@@ -121,6 +126,7 @@ describe("Field arrays", () => {
 
         repr.setMode([true, true]);
         await a.write(Buffer.from([0x40, 123]));
+        await a.flush();
         try {
             await repr.read(b);
             fail("Expected error");

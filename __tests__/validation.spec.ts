@@ -9,6 +9,7 @@ describe("Atomic data type validation", () => {
         const values = [0, 1, 50, 123, 255];
         for(const val of values) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(value).toEqual(val);
             const valid = val >= 10 && val <= 100;
@@ -28,6 +29,7 @@ describe("Atomic data type validation", () => {
         ];
         for(const val of values) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(value).toEqual(val);
             const valid = val >= 10 && val <= 100;
@@ -42,6 +44,7 @@ describe("Atomic data type validation", () => {
         const values = ["hi", "hello world", "aboba", "speedapi", "i like turtles"];
         for(const val of values) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(value).toEqual(val);
             const valid = val.length >= 2 && val.length <= 7;
@@ -56,6 +59,7 @@ describe("Atomic data type validation", () => {
         const values = ["hi", "heLLo", "123", "!@#$%^&*()_+"];
         for(const val of values) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(value).toEqual(val);
             const valid = value.match(/[a-z]+/i) !== null;
@@ -70,6 +74,7 @@ describe("Atomic data type validation", () => {
         const values = [false, true];
         for(const val of values) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(value).toEqual(val);
             expect(repr.findError(value) === null).toEqual(true);
@@ -93,11 +98,13 @@ describe("Atomic data type validation", () => {
 
         for(const val of pass) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(repr.findError(value) === null).toEqual(true);
         }
         for(const val of fail) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(repr.findError(value) === null).toEqual(false);
         }
@@ -120,11 +127,13 @@ describe("Atomic data type validation", () => {
 
         for(const val of pass) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(repr.findError(value) === null).toEqual(true);
         }
         for(const val of fail) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(repr.findError(value) === null).toEqual(false);
         }
@@ -145,6 +154,7 @@ describe("Atomic data type validation", () => {
 
         for(const [pass, val] of values) {
             await repr.write(a, val);
+            await a.flush();
             const value = await repr.read(b);
             expect(repr.findError(value) === null).toEqual(pass);
         }
