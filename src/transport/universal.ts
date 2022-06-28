@@ -4,10 +4,9 @@ import { Duplex } from "../index";
 import { SpecSpaceGen } from "../index";
 import { Session } from "../index";
 
-// Helps transform event-driven interfaces to async read(), write() and flush() calls used by SpeedAPI
+// Helps transform event-driven interfaces to async read() and write() calls used by SpeedAPI
 export abstract class BufferedLink extends Duplex {
     private readBuf = new Uint8Array(0);
-    private writeBuf = new Uint8Array(0);
     private dataListener?: () => void;
 
     // successor calls this when new data arrives
@@ -27,15 +26,7 @@ export abstract class BufferedLink extends Duplex {
     abstract override close(): Promise<void>;
 
     async write(data: Uint8Array): Promise<void> {
-        const arr = new Uint8Array(this.writeBuf.length + data.length);
-        arr.set(this.writeBuf);
-        arr.set(data, this.writeBuf.length);
-        this.writeBuf = arr;
-    }
-
-    async flush() {
-        await this.dataWrite(this.writeBuf);
-        this.writeBuf = new Uint8Array(0);
+        await this.dataWrite(data);
     }
 
     read(cnt: number): Promise<Uint8Array> {

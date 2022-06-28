@@ -4,6 +4,7 @@ import * as common from "./common";
 import * as things from "./things";
 import { Entity as EntityRepr, FieldArray, Int, Str, DataRepr } from "./repr";
 import { Session } from "./session";
+import { Collector } from "./serial";
 
 // A Segment, the smallest chunk of data in an API setting
 // (as opposed to standalone [de]serialization mode)
@@ -32,9 +33,10 @@ export abstract class Segment {
 
     // Writes the whole segment
     async write(stream: common.Writable) {
-        await stream.write(Uint8Array.from([this.transactionId]));
-        await this.encode(stream);
-        await stream.flush();
+        const collector = new Collector();
+        await collector.write(Uint8Array.from([this.transactionId]));
+        await this.encode(collector);
+        await stream.write(collector.data);
     }
 
     // Reads and decodes the whole segment

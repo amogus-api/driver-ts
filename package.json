@@ -1,6 +1,6 @@
 {
   "name": "@speedapi/driver",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "SpeedAPI wire protocol implementation for TypeScript",
   "main": "dist/index.js",
   "scripts": {

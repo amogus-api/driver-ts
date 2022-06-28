@@ -41,15 +41,13 @@ export abstract class Readable extends EventHost<StreamEvent> {
     abstract close(): Promise<void>;
 }
 export abstract class Writable extends EventHost<StreamEvent> {
-    abstract write(data: Uint8Array): Promise<void | any>;
+    abstract write(data: Uint8Array, substream?: number): Promise<void | any>;
     abstract close(): Promise<void>;
-    abstract flush(): Promise<void>;
 }
 export abstract class Duplex extends EventHost<StreamEvent> {
     abstract read(cnt: number): Promise<Uint8Array>;
-    abstract write(data: Uint8Array): Promise<void | any>;
+    abstract write(data: Uint8Array, substream?: number): Promise<void | any>;
     abstract close(): Promise<void>;
-    abstract flush(): Promise<void>;
 }
 
 export type NotNull<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;

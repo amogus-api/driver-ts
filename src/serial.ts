@@ -4,7 +4,7 @@ import { Duplex } from "./common";
 import { FieldArray, FieldSpec, FieldValue } from "./repr";
 
 // Remembers (collects) and/or pushes out data from a buffer
-class Collector extends Duplex {
+export class Collector extends Duplex {
     data: Uint8Array;
 
     constructor(initial?: Uint8Array) {
@@ -30,8 +30,6 @@ class Collector extends Duplex {
     async close(): Promise<void> {
         this.trigger({ type: "closed" });
     }
-
-    async flush() { }
 }
 
 // Uses the Collector to serialize/deserialize a FieldArray to memory

@@ -1,5 +1,6 @@
-import * as speedapi from "../src/index";
+import { Server } from "../src/index";
 import * as node from "../src/transport/node";
+import * as universal from "../src/transport/universal";
 import * as api from "./entity_output/ts/index";
 
 describe("Transport layer", () => {
@@ -18,26 +19,31 @@ describe("Transport layer", () => {
         } catch { }
     });
 
-    test("Flush after segment write", async () => {
-        class TestLink extends speedapi.Duplex {
-            flushed = false;
+    test("Simultaneous transactions should not interfere with each other", async () => {
+        const { client, server } = universal.createDummyPair(api.$specSpace);
+        const session = api.$bind(client);
+        const serverApi = new Server(server, {});
 
-            async close() { }
-            async write() { }
-            async read(_n: number) { return Uint8Array.from([]); }
-            override async flush() {
-                this.flushed = true;
-            }
-        }
+        serverApi.onInvocation("global_echo", async (method, _state) => {
+            await method.return({ str: method.params.str });
+        });
 
-        const link = new TestLink();
-        expect(link.flushed).toBe(false);
+        expect(await Promise.all([
+            session.globalEcho({ str: "hello" }),
+            session.globalEcho({ str: "world" }),
+            session.globalEcho({ str: "unit testing" }),
+        ])).toEqual([
+            { str: "hello" },
+            { str: "world" },
+            { str: "unit testing" },
+        ]);
 
-        // sending the segment manually because `session.global_echo` awaits a response
-        const method = new api.GlobalEcho();
-        method.params = { str: "hi" };
-        await new speedapi.segment.InvokeMethodSegment(0, method).write(link);
-
-        expect(link.flushed).toBe(true);
+        expect(await Promise.all([
+            session.globalEcho({ str: "a" }),
+            session.globalEcho({ str: "b" }),
+        ])).toEqual([
+            { str: "a" },
+            { str: "b" },
+        ]);
     });
 });

@@ -61,15 +61,12 @@ import { Duplex } from "@speedapi/driver";
 class MyLink extends Duplex {
     constructor(/* pass what you need (e.g. a socket) */) { }
     async write(data: Uint8Array): Promise<void> { }
-    async flush(): Promise<void> { } // called once the segment has finished writing
     async read(cnt: number): Promise<Uint8Array> { }
     async close(): Promise<void> { }
 }
 ```
 
-Alternatively, you can extend from `BufferedLink` in either of those situations:
-  - The underlying protocol is datagram-based and unordered. Sending a datagram per `write` call is okay only as long as ordering is not broken. In other cases, you _must_ send the full segment in one go using `BufferedLink`.
-  - The underlying protocol implementation is event-driven, meaning it provides a "data has arrived" callback, but not a "read me N bytes" function.
+Alternatively, you can extend from `BufferedLink` if the underlying protocol implementation is event-driven, meaning it provides a "data has arrived" callback, but not a "read me N bytes" function.
 
 ```ts
 import { BufferedLink } from "@speedapi/driver/transport/universal";
@@ -81,7 +78,6 @@ class MyLink extends BufferedLink {
         });
     }
 
-    // provides entire segments
     protected async dataWrite(data: Uint8Array): Promise<void> { }
     override async close(): Promise<void> { }
 }

@@ -214,7 +214,10 @@ export abstract class Session<Gen extends things.SpecSpaceGen = things.SpecSpace
 
     // Writes one segment
     async writeSegment(segm: segment.Segment): Promise<void> {
-        const transaction = this.transactions[segm.transactionId];
+        const transaction = this.transactions.find(x => x.id === segm.transactionId);
+        if(!transaction)
+            throw new Error(`transaction ${segm.transactionId} not found on write`);
+
         transaction.segments.push(segm);
         transaction?.notify({ type: "outbound", segment: segm });
 

@@ -9,7 +9,6 @@ describe("Atomic data type representation", () => {
         const values = [0, 1, 123, 255];
         for(const val of values) {
             await repr.write(a, val);
-            await a.flush();
             expect(await repr.read(b)).toEqual(val);
         }
     });
@@ -21,7 +20,6 @@ describe("Atomic data type representation", () => {
         const values = [0, 1, 123, 255, 256, 10000, 65535, 65536, 10000000];
         for(const val of values) {
             await repr.write(a, val);
-            await a.flush();
             expect(await repr.read(b)).toEqual(val);
         }
     });
@@ -37,7 +35,6 @@ describe("Atomic data type representation", () => {
         ];
         for(const val of values) {
             await repr.write(a, val);
-            await a.flush();
             expect(await repr.read(b)).toEqual(val);
         }
     });
@@ -59,7 +56,6 @@ describe("Atomic data type representation", () => {
         ];
         for(const val of values) {
             await repr.write(a, val);
-            await a.flush();
             expect(await repr.read(b)).toEqual(val);
         }
 
@@ -87,7 +83,6 @@ describe("Atomic data type representation", () => {
         ];
         for(const val of values) {
             await repr.write(a, val);
-            await a.flush();
             expect(await repr.read(b)).toEqual(val);
         }
 
@@ -102,7 +97,6 @@ describe("Atomic data type representation", () => {
         const values = ["hi", "hello world", "aboba", "speedapi", "i like turtles"];
         for(const val of values) {
             await repr.write(a, val);
-            await a.flush();
             expect(await repr.read(b)).toEqual(val);
         }
     });
@@ -114,16 +108,13 @@ describe("Atomic data type representation", () => {
         const values = [false, true];
         for(const val of values) {
             await repr.write(a, val);
-            await a.flush();
             expect(await repr.read(b)).toEqual(val);
         }
 
         // test truthy values other than "1"
         await a.write(Buffer.from([2]));
-        await a.flush();
         expect(await repr.read(b)).toEqual(true);
         await a.write(Buffer.from([100]));
-        await a.flush();
         expect(await repr.read(b)).toEqual(true);
     });
 
@@ -140,7 +131,6 @@ describe("Atomic data type representation", () => {
         ];
         for(const val of values) {
             await repr.write(a, val);
-            await a.flush();
             expect(await repr.read(b)).toEqual(val);
         }
     });
@@ -158,7 +148,6 @@ describe("Atomic data type representation", () => {
         ];
         for(const val of values) {
             await repr.write(a, val);
-            await a.flush();
             expect(await repr.read(b)).toEqual(val);
         }
     });

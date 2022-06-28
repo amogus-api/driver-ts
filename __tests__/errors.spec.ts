@@ -1,4 +1,5 @@
 import * as speedapi from "../src/index";
+import { InvokeMethodSegment } from "../src/segment";
 import { createDummyPair } from "../src/transport/universal";
 import * as api from "./entity_output/ts/index";
 import { ColorSpec } from "./compound_output/ts/index";
@@ -30,7 +31,7 @@ describe("Library errors", () => {
 
         for(let i = 0; i < 256; i++) {
             try {
-                await client.createTransaction(new speedapi.segment.InvokeMethodSegment(0, method));
+                await client.createTransaction(new InvokeMethodSegment(0, method));
                 expect(i).toBeLessThan(255);
             } catch(ex) {
                 expect(i).toBe(255);
