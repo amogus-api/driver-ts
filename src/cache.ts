@@ -6,6 +6,8 @@ import { FieldValue, TsType } from "./repr";
 
 type IdType<E extends Entity> = TsType<E["spec"]["fields"]["required"]["id"]>;
 
+// Wraps a client with an entity cache, updates itself on server notices and
+// auto-magically deconstructs partial list updates
 export class Cache {
     private cache: { [id: string]: Entity } = {};
     private listeners: { [id: string]: ((entity: Entity) => void)[]|undefined } = {};
@@ -17,6 +19,7 @@ export class Cache {
         });
     }
 
+    // Gets an entity from the server or cache if it's available there
     async get<T extends Entity>(reference: new () => T, id: IdType<T>): Promise<ValuedEntity<T>> {
         const cached = this.cache[String(id)];
         if(cached)
@@ -28,13 +31,14 @@ export class Cache {
         return entity as ValuedEntity<T>;
     }
 
+    // Updates an entity
     async update<T extends Entity>(reference: new (data: FieldValue<T["spec"]["fields"]>) => T, data: FieldValue<T["spec"]["fields"]>) {
         const entity = this.cache[String(data.id)] ?? new reference(data);
         await entity.$update(data);
         this.cache[String(data.id)] = entity;
     }
 
-    // subscribes to future entity updates
+    // Subscribes to future entity updates
     subscribe<T extends Entity>(_reference: new () => T, id: IdType<T>, cb: (entity: T) => any) {
         type U = (entity: Entity) => void;
         if(!this.listeners[String(id)])
@@ -47,6 +51,7 @@ export class Cache {
         return [id, cb] as const;
     }
 
+    // Unsubscribes a function from updates
     unsubscribe<T extends Entity>(data: readonly [bigint, (entity: T) => void]) {
         const [id, cb] = data;
 

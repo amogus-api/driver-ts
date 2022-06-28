@@ -5,6 +5,8 @@ import * as things from "./things";
 import { Entity as EntityRepr, FieldArray, Int, Str, DataRepr } from "./repr";
 import { Session } from "./session";
 
+// A Segment, the smallest chunk of data in an API setting
+// (as opposed to standalone [de]serialization mode)
 export abstract class Segment {
     transactionId: number;
     abstract readonly boundTo: common.PeerType;
@@ -13,24 +15,29 @@ export abstract class Segment {
         this.transactionId = tran;
     }
 
+    // Knowing the prefix and transaction bytes, decodes the rest of the segment
     static async decode(_session: Session, _stream: common.Readable, _prefix: number, _tran: number): Promise<Segment> {
         throw new Error("Not implemented");
     }
 
+    // Decodes the prefix byte
     static decodePrefix(prefix: number): [boolean, boolean] {
         return [(prefix & 16) > 0, (prefix & 32) > 0];
     }
 
+    // Encodes the meat of the segment (all except the transaction byte)
     async encode(_stream: common.Writable): Promise<void> {
         throw new Error("Not implemented");
     }
 
+    // Writes the whole segment
     async write(stream: common.Writable) {
         await stream.write(Uint8Array.from([this.transactionId]));
         await this.encode(stream);
         await stream.flush();
     }
 
+    // Reads and decodes the whole segment
     static async read(session: Session, stream: common.Readable, boundTo: common.PeerType): Promise<Segment> {
         const [tran, prefix] = [...await stream.read(2)];
         const concreteClass = {

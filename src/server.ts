@@ -5,14 +5,17 @@ import { FieldArray } from "./repr";
 import { InvocationEvent, Session as SessionType } from "./session";
 import { SpecSpace, AllMethods } from "./things";
 
+// Extracts the method spec from a spec space by its name
 type MethodByName<M extends AllMethods<SpecSpace>, N extends M["spec"]["name"]> =
     Extract<M, { spec: { name: N } }>;
 
+// Wraps a Session providing a nicer API on the server side
 export class Server<State extends object, Session extends SessionType> {
     debug: boolean;
 
     private session: Session;
     private state: State;
+    // rate limiter state
     private limiter: {
         [_ in AllMethods<Session["specSpace"]>["spec"]["name"]]?:
         number[]
@@ -23,8 +26,7 @@ export class Server<State extends object, Session extends SessionType> {
         this.state = initialState;
         this.debug = debug ?? false;
 
-        if(this.debug)
-            this.log("created", {});
+        this.log("created", {});
 
         // debug events
         this.session.subscribe((e) => {
@@ -35,6 +37,7 @@ export class Server<State extends object, Session extends SessionType> {
         });
     }
 
+    // Logs a message if `debug` is true
     private log(tag: string, data?: object|string) {
         if(!this.debug)
             return;
@@ -46,6 +49,7 @@ export class Server<State extends object, Session extends SessionType> {
         console.log();
     }
 
+    // Registers a method callback
     onInvocation<M extends AllMethods<Session["specSpace"]>, N extends M["spec"]["name"]>(
         name: N,
         callback: (method: NotNull<MethodByName<M, N>, "params">, state: State) => Promise<State|void|undefined>|State|void|undefined
@@ -87,6 +91,7 @@ export class Server<State extends object, Session extends SessionType> {
                 return;
             }
 
+            // save new state
             const newState = await callback(method, this.state);
             if(newState !== undefined) {
                 this.log("state_updated", newState);
@@ -95,6 +100,7 @@ export class Server<State extends object, Session extends SessionType> {
         });
     }
 
+    // Registers a link destruction callback
     onClose(callback: (state: State) => void) {
         this.session.subscribe((e) => {
             if(e.type === "close")

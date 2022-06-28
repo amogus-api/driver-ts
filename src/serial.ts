@@ -3,6 +3,7 @@
 import { Duplex } from "./common";
 import { FieldArray, FieldSpec, FieldValue } from "./repr";
 
+// Remembers (collects) and/or pushes out data from a buffer
 class Collector extends Duplex {
     data: Uint8Array;
 
@@ -11,6 +12,7 @@ class Collector extends Duplex {
         this.data = initial ?? new Uint8Array(0);
     }
 
+    // appends a buffer
     async write(val: Uint8Array): Promise<void> {
         const arr = new Uint8Array(this.data.length + val.length);
         arr.set(this.data);
@@ -18,6 +20,7 @@ class Collector extends Duplex {
         this.data = arr;
     }
 
+    // dequeues a buffer
     async read(num: number): Promise<Uint8Array> {
         const ret = this.data.slice(0, num);
         this.data = this.data.slice(num);
@@ -31,6 +34,7 @@ class Collector extends Duplex {
     async flush() { }
 }
 
+// Uses the Collector to serialize/deserialize a FieldArray to memory
 export class Serializer<Spec extends FieldSpec> {
     private readonly repr;
     private readonly hasOptional;
@@ -59,6 +63,9 @@ export class Serializer<Spec extends FieldSpec> {
         const mode: [boolean, boolean] = [(modeByte & 1) > 0, (modeByte & 2) > 0];
         this.repr.setMode(mode);
 
-        return await this.repr.read(collector);
+        const result = await this.repr.read(collector);
+        if(collector.data.length != 0)
+            throw new Error("extra data in buffer after deserialization");
+        return result;
     }
 }

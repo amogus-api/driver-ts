@@ -4,7 +4,7 @@ import { Duplex } from "../index";
 import { SpecSpaceGen } from "../index";
 import { Session } from "../index";
 
-// Helps transform event-driven interfaces to async read() and write() calls used by SpeedAPI
+// Helps transform event-driven interfaces to async read(), write() and flush() calls used by SpeedAPI
 export abstract class BufferedLink extends Duplex {
     private readBuf = new Uint8Array(0);
     private writeBuf = new Uint8Array(0);
@@ -60,6 +60,7 @@ export abstract class BufferedLink extends Duplex {
     }
 }
 
+// Exchanges data with another DummyLink in memory
 class DummyLink extends BufferedLink {
     other!: DummyLink;
 

@@ -4,6 +4,7 @@ import { Cloneable, NotNull } from "./common";
 import { FieldValue, FieldSpec, DataRepr, FieldKeys, getTypeOfKey, List, mergePlu } from "./repr";
 import { Session, InvocationEvent } from "./session";
 
+// Entity specification
 export interface EntitySpec {
     fields: FieldSpec & {
         required: { id: DataRepr<any> },
@@ -12,10 +13,12 @@ export interface EntitySpec {
     methods: { [numericId: number]: Method };
 }
 
+// Entity that must have a non-null value
 export type ValuedEntity<E extends Entity<EntitySpec> = Entity<EntitySpec>> =
     Omit<E, "value"> &
     Required<Pick<E, "value">>;
 
+// Infers the entity specification
 export type GetEntitySpec<E> = E extends Entity<infer S> ? S : never;
 
 export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Cloneable {
@@ -33,8 +36,11 @@ export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Clone
         this.value = value;
     }
 
+    // Defined by the spec, this definition just enforces its existence
+    // (SUSC should output this method automatically)
     abstract update(_params: { entity: ValuedEntity }): Promise<Record<string, never>>;
 
+    // User-facing update method
     async $update(toUpdate: Omit<FieldValue<Spec["fields"]>, "id">): Promise<void> {
         if(!this.value)
             throw new Error("This entity doesn't have a value");
@@ -48,6 +54,7 @@ export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Clone
         await this.update({ entity: entity as ValuedEntity });
     }
 
+    // Merges two entity values
     static mergeValues<S extends FieldSpec, T extends FieldValue<S>>(spec: S, first: T, second: T, expand = false): T {
         if(typeof first !== "object" && second !== undefined)
             return second;
@@ -71,6 +78,7 @@ export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Clone
         return result;
     }
 
+    // User-facing get method
     static async $get(_id: any): Promise<ValuedEntity> {
         throw new Error("Not implemented");
     }
@@ -78,6 +86,7 @@ export abstract class Entity<Spec extends EntitySpec = EntitySpec> extends Clone
 
 
 
+// Method specification
 export interface MethodSpec {
     name: string;
     params: FieldSpec;
@@ -86,8 +95,11 @@ export interface MethodSpec {
     rateLimit?: readonly [number, number];
     entityIdRepr?: DataRepr<any>;
 }
+
+// Infers the entity specification
 export type GetMethodSpec<M> = M extends Method<infer S> ? S : never;
 
+// Represents a method operation
 export abstract class Method<Spec extends MethodSpec = MethodSpec> extends Cloneable {
     readonly spec: Spec;
     readonly numericId: number;
@@ -127,6 +139,7 @@ export abstract class Method<Spec extends MethodSpec = MethodSpec> extends Clone
 
 
 
+// Confirmation specification
 export interface ConfSpec {
     request: FieldSpec;
     response: FieldSpec;
@@ -148,6 +161,7 @@ export abstract class Confirmation<Spec extends ConfSpec = ConfSpec> extends Clo
 
 
 
+// Specification space (combines all definitions in one object)
 export interface SpecSpace {
     specVersion: "2",
     project: string,
@@ -156,10 +170,17 @@ export interface SpecSpace {
     confirmations: { [id: number]: Confirmation };
 }
 
+// Returns a union of all object values
 type ObjValues<O> = O extends any ? O[keyof O] : never;
+
+// Returns a union of all method names in a spec space
 export type AllMethods<Spec extends SpecSpace> =
     ObjValues<Spec["globalMethods"]> |
     ObjValues<GetEntitySpec<ObjValues<Spec["entities"]>>["methods"]>;
 
+// Function output by SUSC that returns a spec space with all its members bound to the
+// provided session
 export type SpecSpaceGen<Spec extends SpecSpace = SpecSpace> = (session: Session) => Spec;
+
+// Infers the spec space type from a generator
 export type SpaceOfGen<Gen extends SpecSpaceGen> = Gen extends SpecSpaceGen<infer S> ? S : never;

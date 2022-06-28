@@ -5,6 +5,7 @@ import { Session } from "./session";
 import { range, rangeCheck, Readable, Writable } from "./common";
 import { ValuedEntity, SpecSpace } from "./things";
 
+// Generic data representation class
 export abstract class DataRepr<T> {
     specSpace?: SpecSpace;
     session?: Session;
